@@ -55,7 +55,7 @@ class ReportService(
             systemPrompt = template.systemPrompt,
             userMessage = """
                 사용자: ${user.name}
-                부서: ${user.department ?: "미지정"}
+                부서: ${user.department?.name ?: "미지정"}
                 기간: ${request.weekStart} ~ ${request.weekEnd}
 
                 업무 기록:
