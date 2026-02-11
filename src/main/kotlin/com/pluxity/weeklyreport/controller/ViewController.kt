@@ -18,6 +18,9 @@ class ViewController(
     @GetMapping("/login")
     fun login(): String = "pages/login"
 
+    @GetMapping("/signup")
+    fun signup(): String = "pages/signup"
+
     @GetMapping("/reports")
     fun reports(model: Model): String {
         model.addAttribute("activePage", "reports")

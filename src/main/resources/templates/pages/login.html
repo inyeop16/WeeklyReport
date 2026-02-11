@@ -160,7 +160,7 @@
 
         <!-- Footer -->
         <div class="login-footer">
-            아직 계정이 없으신가요? <a href="#" onclick="return false;">회원가입</a>
+            아직 계정이 없으신가요? <a href="/signup">회원가입</a>
         </div>
     </div>
 </div>
@@ -170,11 +170,11 @@
 function handleLogin(event) {
     event.preventDefault();
 
-    const email = document.getElementById('email').value;
+    const username = document.getElementById('username').value;
     const password = document.getElementById('password').value;
 
-    // 임시: 어떤 이메일/비밀번호든 로그인 허용 (실제 인증 로직 없음)
-    if (email && password) {
+    // 임시: 어떤 username/비밀번호든 로그인 허용 (실제 인증 로직 없음)
+    if (username && password) {
         // 로그인 성공 시 주간보고 페이지로 이동
         window.location.href = '/reports';
     }
