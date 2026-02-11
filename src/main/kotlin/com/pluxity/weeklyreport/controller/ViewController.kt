@@ -13,7 +13,13 @@ class ViewController(
 ) {
 
     @GetMapping("/")
-    fun index(): String = "redirect:/reports"
+    fun index(): String = "redirect:/login"
+
+    @GetMapping("/login")
+    fun login(): String = "pages/login"
+
+    @GetMapping("/signup")
+    fun signup(): String = "pages/signup"
 
     @GetMapping("/reports")
     fun reports(model: Model): String {
