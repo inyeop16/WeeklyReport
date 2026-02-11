@@ -130,8 +130,10 @@ class BotService(
         return userRepository.findByEmail(email)
             ?: userRepository.save(
                 com.pluxity.weeklyreport.domain.entity.User(
+                    username = fromId,
                     name = fromName,
-                    email = email
+                    email = email,
+                    password = ""
                 )
             )
     }
