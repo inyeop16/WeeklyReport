@@ -1,0 +1,313 @@
+/**
+ * Reports Page Logic - Migrated from chat.html
+ */
+
+(function() {
+    'use strict';
+
+    const chat = document.getElementById('chat');
+    const input = document.getElementById('input');
+    const userSelect = document.getElementById('userSelect');
+    const templateSelect = document.getElementById('templateSelect');
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        // Restore selected user/template from localStorage
+        const savedUserId = Common.getSelectedUser();
+        const savedTemplateId = Common.getSelectedTemplate();
+
+        if (savedUserId) {
+            userSelect.value = savedUserId;
+        }
+        if (savedTemplateId) {
+            templateSelect.value = savedTemplateId;
+        }
+
+        // Save selections on change
+        userSelect.addEventListener('change', function() {
+            Common.setSelectedUser(this.value);
+        });
+
+        templateSelect.addEventListener('change', function() {
+            Common.setSelectedTemplate(this.value);
+        });
+
+        // Auto-resize textarea
+        input.addEventListener('input', function() {
+            this.style.height = '48px';
+            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+        });
+
+        // Show welcome message
+        addMsg(
+            '안녕하세요! 주간보고 생성기입니다.\n\n' +
+            '1. 위에서 사용자와 템플릿을 선택하세요\n' +
+            '2. 아래 입력창에 오늘 업무 내용을 입력하세요\n' +
+            '3. "주간보고 생성" 버튼으로 AI 보고서를 만들 수 있습니다',
+            'bot',
+            '시스템'
+        );
+    });
+
+    /**
+     * Add message to chat
+     */
+    function addMsg(text, type = 'bot', label = '') {
+        const div = document.createElement('div');
+        div.className = `msg ${type}`;
+        if (label && type === 'bot') {
+            div.innerHTML = `<div class="label">${label}</div>${Common.escapeHtml(text)}`;
+        } else {
+            div.textContent = text;
+        }
+        chat.appendChild(div);
+        chat.scrollTop = chat.scrollHeight;
+        return div;
+    }
+
+    /**
+     * Add HTML message to chat
+     */
+    function addHtmlMsg(html, label = '') {
+        const div = document.createElement('div');
+        div.className = 'msg bot';
+        div.innerHTML = (label ? `<div class="label">${label}</div>` : '') + html;
+        chat.appendChild(div);
+        chat.scrollTop = chat.scrollHeight;
+    }
+
+    /**
+     * Show typing indicator
+     */
+    function showTyping() {
+        const div = document.createElement('div');
+        div.className = 'typing';
+        div.id = 'typing';
+        div.textContent = '생성 중';
+        chat.appendChild(div);
+        chat.scrollTop = chat.scrollHeight;
+    }
+
+    /**
+     * Hide typing indicator
+     */
+    function hideTyping() {
+        document.getElementById('typing')?.remove();
+    }
+
+    /**
+     * Handle action buttons
+     */
+    window.doAction = async function(action) {
+        const userId = userSelect.value;
+
+        if (action === 'users') {
+            try {
+                const users = await API.users.getAll();
+                if (users.length === 0) {
+                    return addMsg('등록된 사용자가 없습니다.');
+                }
+                const list = users.map(u =>
+                    `• ${u.name} (${u.email}) - ${u.department || '부서없음'}`
+                ).join('\n');
+                addMsg(list, 'bot', '사용자 목록');
+            } catch (e) {
+                addMsg(e.message, 'bot error');
+            }
+
+        } else if (action === 'templates') {
+            try {
+                const templates = await API.templates.getAll();
+                if (templates.length === 0) {
+                    return addMsg('등록된 템플릿이 없습니다.');
+                }
+                const list = templates.map(t =>
+                    `• [${t.id}] ${t.name}${t.department ? ' (' + t.department + ')' : ''}`
+                ).join('\n');
+                addMsg(list, 'bot', '템플릿 목록');
+            } catch (e) {
+                addMsg(e.message, 'bot error');
+            }
+
+        } else if (action === 'entries') {
+            if (!userId) {
+                return addMsg('사용자를 먼저 선택하세요.', 'bot');
+            }
+            try {
+                const entries = await API.entries.getByUser(userId);
+                if (entries.length === 0) {
+                    return addMsg('등록된 업무기록이 없습니다.', 'bot');
+                }
+                const list = entries.map(e =>
+                    `• [${e.entryDate}] ${e.content}${e.category ? ' #' + e.category : ''}`
+                ).join('\n');
+                addMsg(list, 'bot', '업무기록');
+            } catch (e) {
+                addMsg(e.message, 'bot error');
+            }
+
+        } else if (action === 'generate') {
+            if (!userId) {
+                return addMsg('사용자를 먼저 선택하세요.', 'bot');
+            }
+            const tplId = templateSelect.value;
+            if (!tplId) {
+                return addMsg('템플릿을 먼저 선택하세요.', 'bot');
+            }
+
+            const { start, end } = Common.getCurrentWeek();
+
+            addMsg(`주간보고 생성 요청 (${start} ~ ${end})`, 'user');
+            showTyping();
+
+            try {
+                const report = await API.reports.generate({
+                    userId: Number(userId),
+                    templateId: Number(tplId),
+                    weekStart: start,
+                    weekEnd: end
+                });
+                hideTyping();
+                showReport(report);
+            } catch (e) {
+                hideTyping();
+                addMsg(e.message, 'bot error');
+            }
+
+        } else if (action === 'reports') {
+            if (!userId) {
+                return addMsg('사용자를 먼저 선택하세요.', 'bot');
+            }
+            try {
+                const reports = await API.reports.getByUser(userId);
+                if (reports.length === 0) {
+                    return addMsg('생성된 보고서가 없습니다.', 'bot');
+                }
+                let html = reports.map(r =>
+                    `<div style="margin-bottom:6px">• <a href="#" onclick="viewReport(${r.id});return false" style="color:var(--accent);text-decoration:underline;cursor:pointer">#${r.id}</a> ${r.weekStart} ~ ${r.weekEnd}</div>`
+                ).join('');
+                addHtmlMsg(html, '보고서 목록');
+            } catch (e) {
+                addMsg(e.message, 'bot error');
+            }
+        }
+    };
+
+    /**
+     * Show report in chat
+     */
+    function showReport(report) {
+        const id = report.id;
+        addHtmlMsg(
+            `<div class="report-text" id="report-text-${id}">${Common.escapeHtml(report.rendered || '')}</div>` +
+            `<div class="report-actions" id="report-actions-${id}">` +
+            `<button onclick="editReport(${id})"><i class="bi bi-pencil"></i> 수정</button>` +
+            `</div>`,
+            `주간보고 #${id} (${report.weekStart} ~ ${report.weekEnd})`
+        );
+    }
+
+    /**
+     * View existing report
+     */
+    window.viewReport = async function(id) {
+        try {
+            const report = await API.reports.getById(id);
+            showReport(report);
+        } catch (e) {
+            addMsg(e.message, 'bot error');
+        }
+    };
+
+    /**
+     * Edit report
+     */
+    window.editReport = function(id) {
+        const actionsEl = document.getElementById(`report-actions-${id}`);
+        if (!actionsEl) return;
+
+        actionsEl.innerHTML =
+            `<div class="edit-area">` +
+            `<textarea id="edit-input-${id}" placeholder="수정 지시사항을 입력하세요 (예: 좀 더 간결하게 해줘, 성과 부분을 강조해줘)"></textarea>` +
+            `</div>` +
+            `<div class="report-actions" style="margin-top:6px">` +
+            `<button onclick="saveReport(${id})"><i class="bi bi-check"></i> AI 수정 요청</button>` +
+            `<button onclick="cancelEdit(${id})"><i class="bi bi-x"></i> 취소</button>` +
+            `</div>`;
+
+        document.getElementById(`edit-input-${id}`).focus();
+    };
+
+    /**
+     * Cancel edit
+     */
+    window.cancelEdit = function(id) {
+        const actionsEl = document.getElementById(`report-actions-${id}`);
+        if (!actionsEl) return;
+        actionsEl.innerHTML = `<button onclick="editReport(${id})"><i class="bi bi-pencil"></i> 수정</button>`;
+    };
+
+    /**
+     * Save report with AI modification
+     */
+    window.saveReport = async function(id) {
+        const ta = document.getElementById(`edit-input-${id}`);
+        if (!ta) return;
+
+        const instruction = ta.value.trim();
+        if (!instruction) {
+            return addMsg('수정 지시사항을 입력하세요.', 'bot');
+        }
+
+        addMsg(instruction, 'user');
+        cancelEdit(id);
+        showTyping();
+
+        try {
+            const report = await API.reports.update(id, instruction);
+            hideTyping();
+            showReport(report);
+        } catch (e) {
+            hideTyping();
+            addMsg(e.message, 'bot error');
+        }
+    };
+
+    /**
+     * Send daily entry
+     */
+    window.sendEntry = async function() {
+        const text = input.value.trim();
+        if (!text) return;
+
+        const userId = userSelect.value;
+        if (!userId) {
+            return addMsg('사용자를 먼저 선택하세요.', 'bot');
+        }
+
+        addMsg(text, 'user');
+        input.value = '';
+        input.style.height = '48px';
+
+        try {
+            const entry = await API.entries.create({
+                userId: Number(userId),
+                entryDate: Common.getToday(),
+                content: text
+            });
+            addMsg(`업무기록 저장 완료 (${entry.entryDate})`, 'bot', '기록됨');
+        } catch (e) {
+            addMsg(e.message, 'bot error');
+        }
+    };
+
+    /**
+     * Handle keyboard input
+     */
+    window.handleKey = function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendEntry();
+        }
+    };
+})();
