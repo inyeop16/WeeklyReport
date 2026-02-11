@@ -25,6 +25,9 @@ spring:
             enable: true
 
 app:
+  jwt:
+    secret: ${JWT_SECRET}
+    expiration: 604800000
   ai:
     provider: groq
     claude:
