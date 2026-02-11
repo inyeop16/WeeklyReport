@@ -16,12 +16,24 @@ const API = (() => {
             }
         };
 
+        const token = Common.getToken();
+        if (token) {
+            options.headers['Authorization'] = 'Bearer ' + token;
+        }
+
         if (body) {
             options.body = JSON.stringify(body);
         }
 
         try {
             const response = await fetch(BASE_URL + path, options);
+
+            if (response.status === 401) {
+                Common.removeToken();
+                window.location.href = '/login';
+                return;
+            }
+
             const data = await response.json();
 
             if (!response.ok) {

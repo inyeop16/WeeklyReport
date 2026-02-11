@@ -43,7 +43,7 @@
 
             <!-- Login/Logout -->
             <div class="d-flex gap-2">
-                <a href="#" onclick="return false;" class="btn btn-sm btn-outline-light">
+                <a href="#" onclick="localStorage.removeItem('accessToken'); window.location.href='/login'; return false;" class="btn btn-sm btn-outline-light">
                     <i class="bi bi-box-arrow-right"></i> 로그아웃
                 </a>
             </div>
