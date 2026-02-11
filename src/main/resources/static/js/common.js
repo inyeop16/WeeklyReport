@@ -206,6 +206,13 @@ const Common = (() => {
         return localStorage.getItem('selectedTemplateId');
     }
 
+    // --- Auth Token ---
+    function saveToken(token) { localStorage.setItem('accessToken', token); }
+    function getToken() { return localStorage.getItem('accessToken'); }
+    function removeToken() { localStorage.removeItem('accessToken'); }
+    function isLoggedIn() { return !!getToken(); }
+    function logout() { removeToken(); window.location.href = '/login'; }
+
     // Public API
     return {
         formatDate,
@@ -222,6 +229,11 @@ const Common = (() => {
         setSelectedUser,
         getSelectedUser,
         setSelectedTemplate,
-        getSelectedTemplate
+        getSelectedTemplate,
+        saveToken,
+        getToken,
+        removeToken,
+        isLoggedIn,
+        logout
     };
 })();
