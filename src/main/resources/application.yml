@@ -1,0 +1,48 @@
+spring:
+  application:
+    name: weekly-report
+  datasource:
+    url: jdbc:postgresql://localhost:5433/weekly_report
+    username: admin
+    password: ${DB_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+app:
+  ai:
+    provider: groq
+    claude:
+      api-key: ${CLAUDE_API_KEY:}
+      model: claude-sonnet-4-20250514
+    local:
+      base-url: ${LOCAL_LLM_URL:http://localhost:11434}
+      model: ${LOCAL_LLM_MODEL:llama3}
+    groq:
+      api-key: ${GROQ_API_KEY}
+      base-url: https://api.groq.com/openai/v1
+      model: openai/gpt-oss-120b
+  bot:
+    app-id: ${BOT_APP_ID:}
+    app-password: ${BOT_APP_PASSWORD:}
+  notification:
+    provider: email
+    teams:
+      webhook-url: ${TEAMS_WEBHOOK_URL:}
+    email:
+      from: ${MAIL_FROM:noreply@pluxity.com}

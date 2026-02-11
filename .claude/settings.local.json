@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir:*)",
+      "WebSearch",
+      "Bash(del \"C:\\\\Users\\\\PLX-PC-N002\\\\weekly-report\\\\src\\\\main\\\\resources\\\\application.properties\")",
+      "Bash(./gradlew dependencies:*)",
+      "Bash(./gradlew compileKotlin:*)",
+      "Bash(./gradlew dependencyInsight:*)",
+      "Bash(.\\\\gradlew.bat build:*)",
+      "Bash(cmd /c \"gradlew.bat build -x test\")",
+      "Bash(cmd /c:*)",
+      "Bash(powershell -Command:*)"
+    ]
+  }
+}
