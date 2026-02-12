@@ -74,7 +74,7 @@ class JwtTokenProvider(
             .payload
 
         val userId = payload.subject.toLong()
-        val role = listOf(payload["role"] as String)
+        val role = payload["role"] as String
         val authorities = listOf(SimpleGrantedAuthority("ROLE_$role"))
         return UsernamePasswordAuthenticationToken(userId, null, authorities)
     }
