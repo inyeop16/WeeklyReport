@@ -32,8 +32,9 @@ class ReportService(
     @Transactional
     fun generate(request: GenerateReportRequest): ReportResponse {
         val user = userService.getEntity(request.userId)
-        val template = templateService.getEntity(request.templateId)
+        val template = templateService.findActive(user.department?.name)
 
+        if(template.isEmpty()) throw BusinessException("등록된 템플릿이 없습니다.")
         val entries = dailyEntryRepository.findByUserIdAndEntryDateBetween(
             request.userId, request.weekStart, request.weekEnd
         )
@@ -52,7 +53,7 @@ class ReportService(
         val rawEntriesJson = objectMapper.writeValueAsString(entriesData)
 
         val aiRequest = AiRequest(
-            systemPrompt = template.systemPrompt,
+            systemPrompt = template.first().systemPrompt,
             userMessage = """
                 사용자: ${user.name}
                 부서: ${user.department?.name ?: "미지정"}

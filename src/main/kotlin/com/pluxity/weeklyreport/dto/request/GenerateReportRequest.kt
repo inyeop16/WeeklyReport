@@ -7,9 +7,6 @@ data class GenerateReportRequest(
     @field:NotNull(message = "사용자 ID는 필수입니다")
     val userId: Long,
 
-    @field:NotNull(message = "템플릿 ID는 필수입니다")
-    val templateId: Long,
-
     @field:NotNull(message = "주 시작일은 필수입니다")
     val weekStart: LocalDate,
 
