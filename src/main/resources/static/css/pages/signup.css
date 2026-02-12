@@ -1,0 +1,77 @@
+body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 2rem 0;
+}
+
+.signup-container {
+    width: 100%;
+    max-width: 480px;
+    padding: 1rem;
+}
+
+.signup-card {
+    background: var(--bg-primary);
+    border-radius: 1rem;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    padding: 2.5rem;
+}
+
+.signup-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.signup-header i {
+    font-size: 3rem;
+    color: var(--accent);
+    margin-bottom: 1rem;
+}
+
+.signup-header h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.signup-header p {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.form-floating {
+    margin-bottom: 1rem;
+}
+
+.btn-signup {
+    width: 100%;
+    padding: 0.75rem;
+    font-weight: 600;
+    margin-top: 0.5rem;
+}
+
+.signup-footer {
+    text-align: center;
+    margin-top: 1.5rem;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+}
+
+.signup-footer a {
+    color: var(--accent);
+    text-decoration: none;
+}
+
+.signup-footer a:hover {
+    text-decoration: underline;
+}
+
+.form-text {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 0.25rem;
+}
