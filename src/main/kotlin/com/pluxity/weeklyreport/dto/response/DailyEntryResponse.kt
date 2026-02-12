@@ -11,15 +11,13 @@ data class DailyEntryResponse(
     val content: String,
     val category: String?,
     val createdAt: OffsetDateTime
-) {
-    companion object {
-        fun from(entry: DailyEntry) = DailyEntryResponse(
-            id = entry.id,
-            userId = entry.user.id,
-            entryDate = entry.entryDate,
-            content = entry.content,
-            category = entry.category,
-            createdAt = entry.createdAt
-        )
-    }
-}
+)
+
+fun DailyEntry.toResponse() = DailyEntryResponse(
+    id = id,
+    userId = user.id,
+    entryDate = entryDate,
+    content = content,
+    category = category,
+    createdAt = createdAt
+)
