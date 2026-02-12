@@ -13,17 +13,15 @@ data class ReportResponse(
     val rawEntries: String?,
     val sentTo: List<String>?,
     val createdAt: OffsetDateTime
-) {
-    companion object {
-        fun from(report: Report) = ReportResponse(
-            id = report.id,
-            userId = report.user.id,
-            weekStart = report.weekStart,
-            weekEnd = report.weekEnd,
-            rendered = report.rendered,
-            rawEntries = report.rawEntries,
-            sentTo = report.sentTo?.toList(),
-            createdAt = report.createdAt
-        )
-    }
-}
+)
+
+fun Report.toResponse() = ReportResponse(
+    id = id,
+    userId = user.id,
+    weekStart = weekStart,
+    weekEnd = weekEnd,
+    rendered = rendered,
+    rawEntries = rawEntries,
+    sentTo = sentTo?.toList(),
+    createdAt = createdAt
+)

@@ -4,6 +4,7 @@ import com.pluxity.weeklyreport.domain.entity.DailyEntry
 import com.pluxity.weeklyreport.domain.repository.DailyEntryRepository
 import com.pluxity.weeklyreport.dto.request.CreateDailyEntryRequest
 import com.pluxity.weeklyreport.dto.response.DailyEntryResponse
+import com.pluxity.weeklyreport.dto.response.toResponse
 import com.pluxity.weeklyreport.exception.ResourceNotFoundException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -24,16 +25,16 @@ class DailyEntryService(
             content = request.content,
             category = request.category
         )
-        return DailyEntryResponse.from(dailyEntryRepository.save(entry))
+        return dailyEntryRepository.save(entry).toResponse()
     }
 
     fun findByUserId(userId: Long): List<DailyEntryResponse> =
-        dailyEntryRepository.findByUserId(userId).map(DailyEntryResponse::from)
+        dailyEntryRepository.findByUserId(userId).map { it.toResponse() }
 
     fun findById(id: Long): DailyEntryResponse {
         val entry = dailyEntryRepository.findById(id)
             .orElseThrow { ResourceNotFoundException("DailyEntry", "id", id) }
-        return DailyEntryResponse.from(entry)
+        return entry.toResponse()
     }
 
     @Transactional

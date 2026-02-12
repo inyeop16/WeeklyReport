@@ -4,6 +4,7 @@ import com.pluxity.weeklyreport.domain.entity.Template
 import com.pluxity.weeklyreport.domain.repository.TemplateRepository
 import com.pluxity.weeklyreport.dto.request.CreateTemplateRequest
 import com.pluxity.weeklyreport.dto.response.TemplateResponse
+import com.pluxity.weeklyreport.dto.response.toResponse
 import com.pluxity.weeklyreport.exception.ResourceNotFoundException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -21,7 +22,7 @@ class TemplateService(
             systemPrompt = request.systemPrompt,
             department = request.department
         )
-        return TemplateResponse.from(templateRepository.save(template))
+        return templateRepository.save(template).toResponse()
     }
 
     fun findActive(department: String?): List<TemplateResponse> {
@@ -30,13 +31,13 @@ class TemplateService(
         } else {
             templateRepository.findByActiveTrue()
         }
-        return templates.map(TemplateResponse::from)
+        return templates.map{ it.toResponse() }
     }
 
     fun findById(id: Long): TemplateResponse {
         val template = templateRepository.findById(id)
             .orElseThrow { ResourceNotFoundException("Template", "id", id) }
-        return TemplateResponse.from(template)
+        return template.toResponse()
     }
 
     fun getEntity(id: Long): Template =

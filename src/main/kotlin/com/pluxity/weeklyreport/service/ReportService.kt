@@ -10,6 +10,7 @@ import com.pluxity.weeklyreport.dto.request.GenerateReportRequest
 import com.pluxity.weeklyreport.dto.request.SendReportRequest
 import com.pluxity.weeklyreport.dto.request.UpdateReportRequest
 import com.pluxity.weeklyreport.dto.response.ReportResponse
+import com.pluxity.weeklyreport.dto.response.toResponse
 import com.pluxity.weeklyreport.exception.BusinessException
 import com.pluxity.weeklyreport.exception.ResourceNotFoundException
 import com.pluxity.weeklyreport.notification.NotificationAdapter
@@ -74,7 +75,7 @@ class ReportService(
             rawEntries = rawEntriesJson
         )
 
-        return ReportResponse.from(reportRepository.save(report))
+        return reportRepository.save(report).toResponse()
     }
 
     @Transactional
@@ -100,7 +101,7 @@ class ReportService(
         val aiResponse = aiAdapter.generate(aiRequest)
         report.rendered = aiResponse.content
 
-        return ReportResponse.from(reportRepository.save(report))
+        return reportRepository.save(report).toResponse()
     }
 
     @Transactional
@@ -124,15 +125,15 @@ class ReportService(
         existingSentTo.addAll(request.recipients)
         report.sentTo = existingSentTo.distinct().toTypedArray()
 
-        return ReportResponse.from(reportRepository.save(report))
+        return reportRepository.save(report).toResponse()
     }
 
     fun findById(id: Long): ReportResponse {
         val report = reportRepository.findById(id)
             .orElseThrow { ResourceNotFoundException("Report", "id", id) }
-        return ReportResponse.from(report)
+        return report.toResponse()
     }
 
     fun findByUserId(userId: Long): List<ReportResponse> =
-        reportRepository.findByUserId(userId).map(ReportResponse::from)
+        reportRepository.findByUserId(userId).map{ it.toResponse() }
 }
