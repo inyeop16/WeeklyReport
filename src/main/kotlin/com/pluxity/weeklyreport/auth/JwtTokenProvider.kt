@@ -1,10 +1,12 @@
 package com.pluxity.weeklyreport.auth
 
+import io.jsonwebtoken.Claims
 import io.jsonwebtoken.JwtException
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.security.Keys
 import org.slf4j.LoggerFactory
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
+import org.springframework.security.core.Authentication
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.stereotype.Component
 import java.util.*
@@ -51,32 +53,36 @@ class JwtTokenProvider(
             .parseSignedClaims(token)
             .payload["role"] as String
 
-    fun validateToken(token: String): Boolean =
-        try {
+    // 1. 단순 유효성 검증 (이제 파싱 성공 여부만 확인)
+    fun validateToken(token: String): Boolean = parseClaims(token) != null
+
+    // 2. 인증 객체 생성 (이미 파싱된 Claims를 이용하거나 새로 파싱)
+    fun getAuthentication(token: String): Authentication? {
+        val claims = parseClaims(token) ?: return null // 여기서 한 번만 파싱됨
+
+        val userId = claims.subject.toLong()
+        val authorities = (claims["auth"] as? String)?.split(",")
+            ?.filter { it.isNotEmpty() }
+            ?.map { SimpleGrantedAuthority(it) }
+            ?: emptyList()
+
+        return UsernamePasswordAuthenticationToken(userId, token, authorities)
+    }
+
+    private fun parseClaims(token: String): Claims? {
+        return try {
             Jwts.parser()
                 .verifyWith(key)
                 .build()
                 .parseSignedClaims(token)
-            true
+                .payload
         } catch (e: JwtException) {
             log.warn("JWT 토큰 검증 실패: {}", e.message)
-            false
-        } catch (e: IllegalArgumentException) {
-            log.warn("JWT 토큰이 비어있습니다")
-            false
+            null
+        } catch (_: IllegalArgumentException) {
+            log.warn("JWT 토큰이 비어있거나 잘못되었습니다")
+            null
         }
-
-    fun getAuthenticateFromToken(token: String): UsernamePasswordAuthenticationToken {
-        val payload = Jwts.parser()
-            .verifyWith(key)
-            .build()
-            .parseSignedClaims(token)
-            .payload
-
-        val userId = payload.subject.toLong()
-        val role = payload["role"] as String
-        val authorities = listOf(SimpleGrantedAuthority("ROLE_$role"))
-        return UsernamePasswordAuthenticationToken(userId, null, authorities)
     }
 
 }
