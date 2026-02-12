@@ -15,7 +15,6 @@ import com.pluxity.weeklyreport.exception.BusinessException
 import com.pluxity.weeklyreport.exception.ResourceNotFoundException
 import com.pluxity.weeklyreport.notification.NotificationAdapter
 import com.pluxity.weeklyreport.notification.dto.NotificationRequest
-import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -32,9 +31,7 @@ class ReportService(
 ) {
 
     @Transactional
-    fun generate(request: GenerateReportRequest): ReportResponse {
-        val userId = SecurityContextHolder.getContext().authentication.principal as Long
-
+    fun generate(request: GenerateReportRequest, userId: Long): ReportResponse {
         val user = userService.getEntity(userId)
 
         val template = templateService.findActive(user.department?.name)

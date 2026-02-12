@@ -56,7 +56,7 @@ class BotService(
             CreateDailyEntryRequest(
                 entryDate = LocalDate.now(),
                 content = text
-            )
+            ), 1L
         )
 
         return replyCard(activity, cardBuilder.buildEntryConfirmCard(entry))
@@ -73,7 +73,8 @@ class BotService(
                 GenerateReportRequest(
                     weekStart = weekStart,
                     weekEnd = weekEnd
-                )
+                ),
+                1L
             )
             replyCard(activity, cardBuilder.buildReportCard(report))
         } catch (e: Exception) {

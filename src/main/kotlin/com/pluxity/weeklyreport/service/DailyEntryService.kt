@@ -6,7 +6,6 @@ import com.pluxity.weeklyreport.dto.request.CreateDailyEntryRequest
 import com.pluxity.weeklyreport.dto.response.DailyEntryResponse
 import com.pluxity.weeklyreport.dto.response.toResponse
 import com.pluxity.weeklyreport.exception.ResourceNotFoundException
-import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -18,9 +17,7 @@ class DailyEntryService(
 ) {
 
     @Transactional
-    fun create(request: CreateDailyEntryRequest): DailyEntryResponse {
-        val userId = SecurityContextHolder.getContext().authentication.principal as Long
-
+    fun create(request: CreateDailyEntryRequest, userId: Long): DailyEntryResponse {
         val user = userService.getEntity(userId)
 
         val entry = DailyEntry(

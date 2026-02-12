@@ -165,7 +165,7 @@ src/main/resources/
 - 클래스에 `@Transactional(readOnly = true)`, 변경 메서드에 `@Transactional`
 - 단일 표현식은 expression body 사용
 - 예외: `BusinessException`, `ResourceNotFoundException`
-- **보안**: 현재 사용자 식별은 `SecurityContextHolder.getContext().authentication.principal as Long`로 추출
+- **보안**: 현재 사용자 식별은 `@AuthenticationPrincipal userId: Long` 로 추출
   - Request DTO에 userId를 포함하지 않음 (권한 상승 공격 방지)
   - 리소스 소유자 검증: 조회/수정/삭제 시 `resource.user.id != userId` 확인 후 예외 발생
 

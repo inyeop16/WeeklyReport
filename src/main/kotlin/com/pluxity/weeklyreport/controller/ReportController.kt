@@ -8,6 +8,7 @@ import com.pluxity.weeklyreport.service.ReportService
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.*
 
 @RestController
@@ -17,8 +18,11 @@ class ReportController(
 ) {
 
     @PostMapping("/generate")
-    fun generate(@Valid @RequestBody request: GenerateReportRequest): ResponseEntity<ReportResponse> =
-        ResponseEntity.status(HttpStatus.CREATED).body(reportService.generate(request))
+    fun generate(
+        @Valid @RequestBody request: GenerateReportRequest,
+        @AuthenticationPrincipal userId: Long
+    ): ResponseEntity<ReportResponse> =
+        ResponseEntity.status(HttpStatus.CREATED).body(reportService.generate(request, userId))
 
     @PutMapping("/{id}")
     fun update(
