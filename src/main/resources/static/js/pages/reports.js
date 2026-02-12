@@ -102,7 +102,7 @@
     function showReport(report) {
         const id = report.id;
         addHtmlMsg(
-            `<div class="report-text" id="report-text-${id}">${Common.escapeHtml(report.rendered || '')}</div>` +
+            `<div class="report-text report-content" id="report-text-${id}">${marked.parse(report.rendered || '')}</div>` +
             `<div class="report-actions" id="report-actions-${id}">` +
             `<button onclick="editReport(${id})"><i class="bi bi-pencil"></i> 수정</button>` +
             `</div>`,

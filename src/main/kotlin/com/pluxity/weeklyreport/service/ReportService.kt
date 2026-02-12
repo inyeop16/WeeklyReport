@@ -6,7 +6,10 @@ import com.pluxity.weeklyreport.ai.dto.AiRequest
 import com.pluxity.weeklyreport.domain.entity.Report
 import com.pluxity.weeklyreport.domain.repository.DailyEntryRepository
 import com.pluxity.weeklyreport.domain.repository.ReportRepository
+import com.pluxity.weeklyreport.domain.repository.TemplateRepository
+import com.pluxity.weeklyreport.domain.repository.UserRepository
 import com.pluxity.weeklyreport.dto.request.GenerateReportRequest
+import com.pluxity.weeklyreport.dto.request.GenerateTeamReportRequest
 import com.pluxity.weeklyreport.dto.request.SendReportRequest
 import com.pluxity.weeklyreport.dto.request.UpdateReportRequest
 import com.pluxity.weeklyreport.dto.response.ReportResponse
@@ -27,7 +30,10 @@ class ReportService(
     private val templateService: TemplateService,
     private val aiAdapter: AiAdapter,
     private val notificationAdapter: NotificationAdapter,
-    private val objectMapper: ObjectMapper
+    private val objectMapper: ObjectMapper,
+    private val userRepository: UserRepository,
+    private val templateRepository: TemplateRepository,
+    private val departmentService: DepartmentService
 ) {
 
     @Transactional
@@ -70,6 +76,67 @@ class ReportService(
 
         val report = Report(
             user = user,
+            weekStart = request.weekStart,
+            weekEnd = request.weekEnd,
+            rendered = aiResponse.content,
+            rawEntries = rawEntriesJson
+        )
+
+        return reportRepository.save(report).toResponse()
+    }
+
+    @Transactional
+    fun generateTeam(request: GenerateTeamReportRequest, userId: Long): ReportResponse {
+        val requestUser = userService.getEntity(userId)
+        val department = departmentService.getEntity(request.departmentId)
+        val members = userRepository.findByDepartmentId(request.departmentId)
+
+        if (members.isEmpty()) {
+            throw BusinessException("해당 부서에 소속된 사용자가 없습니다")
+        }
+
+        val teamEntriesData = members.mapNotNull { member ->
+            val entries = dailyEntryRepository.findByUserIdAndEntryDateBetween(
+                member.id, request.weekStart, request.weekEnd
+            )
+            if (entries.isEmpty()) return@mapNotNull null
+            mapOf(
+                "name" to member.name,
+                "entries" to entries.map { entry ->
+                    mapOf(
+                        "date" to entry.entryDate.toString(),
+                        "content" to entry.content,
+                        "category" to entry.category
+                    )
+                }
+            )
+        }
+
+        if (teamEntriesData.isEmpty()) {
+            throw BusinessException("해당 기간에 등록된 팀원 업무 기록이 없습니다")
+        }
+
+        val rawEntriesJson = objectMapper.writeValueAsString(teamEntriesData)
+
+        val template = templateRepository.findByNameAndActiveTrue("기본 팀통합보고")
+            ?: throw BusinessException("팀통합보고 템플릿이 없습니다. 관리 탭에서 등록해주세요.")
+
+        val aiRequest = AiRequest(
+            systemPrompt = template.systemPrompt,
+            userMessage = """
+                부서: ${department.name}
+                기간: ${request.weekStart} ~ ${request.weekEnd}
+                팀원 수: ${teamEntriesData.size}명
+
+                팀원별 업무 기록:
+                $rawEntriesJson
+            """.trimIndent()
+        )
+
+        val aiResponse = aiAdapter.generate(aiRequest)
+
+        val report = Report(
+            user = requestUser,
             weekStart = request.weekStart,
             weekEnd = request.weekEnd,
             rendered = aiResponse.content,

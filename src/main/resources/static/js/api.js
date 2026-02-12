@@ -104,6 +104,7 @@ const API = (() => {
         getByUser: (userId) => http.get(`/reports?userId=${userId}`),
         getById: (id) => http.get(`/reports/${id}`),
         generate: (data) => http.post('/reports/generate', data),
+        generateTeam: (data) => http.post('/reports/generate-team', data),
         update: (id, instruction) => http.put(`/reports/${id}`, { instruction }),
         delete: (id) => http.delete(`/reports/${id}`)
     };

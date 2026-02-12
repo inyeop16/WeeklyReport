@@ -1,6 +1,7 @@
 package com.pluxity.weeklyreport.controller
 
 import com.pluxity.weeklyreport.dto.request.GenerateReportRequest
+import com.pluxity.weeklyreport.dto.request.GenerateTeamReportRequest
 import com.pluxity.weeklyreport.dto.request.SendReportRequest
 import com.pluxity.weeklyreport.dto.request.UpdateReportRequest
 import com.pluxity.weeklyreport.dto.response.ReportResponse
@@ -23,6 +24,13 @@ class ReportController(
         @AuthenticationPrincipal userId: Long
     ): ResponseEntity<ReportResponse> =
         ResponseEntity.status(HttpStatus.CREATED).body(reportService.generate(request, userId))
+
+    @PostMapping("/generate-team")
+    fun generateTeam(
+        @Valid @RequestBody request: GenerateTeamReportRequest,
+        @AuthenticationPrincipal userId: Long
+    ): ResponseEntity<ReportResponse> =
+        ResponseEntity.status(HttpStatus.CREATED).body(reportService.generateTeam(request, userId))
 
     @PutMapping("/{id}")
     fun update(
