@@ -58,7 +58,8 @@ class AuthService(
 
         return TokenResponse(
             accessToken = token,
-            expiresIn = expiresIn
+            expiresIn = expiresIn,
+            userId = user.id
         )
     }
 }
