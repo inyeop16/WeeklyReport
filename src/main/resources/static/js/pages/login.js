@@ -26,7 +26,6 @@ async function handleLogin(event) {
         }
 
         Common.saveToken(data.accessToken);
-        Common.setSelectedUser(data.userId);
         window.location.href = '/reports';
     } catch (error) {
         const existingAlert = document.querySelector('.alert');

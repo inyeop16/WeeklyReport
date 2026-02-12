@@ -18,24 +18,11 @@
 
 <!-- Main Content -->
 <main class="main-content">
-    <div class="header">
-        <h1>주간보고 생성</h1>
-        <select id="userSelect">
-            <option value="">사용자 선택...</option>
-            <option th:each="user : ${users}" th:value="${user.id}" th:text="${user.name + ' (' + (user.department ?: '-') + ')'}"></option>
-        </select>
-        <select id="templateSelect">
-            <option value="">템플릿 선택...</option>
-            <option th:each="template : ${templates}" th:value="${template.id}" th:text="${template.name}"></option>
-        </select>
-    </div>
 
     <div class="chat" id="chat"></div>
 
     <div class="actions">
-        <button onclick="doAction('entries')">내 업무기록</button>
         <button onclick="doAction('generate')">주간보고 생성</button>
-        <button onclick="doAction('reports')">내 보고서</button>
     </div>
 
     <div class="input-area">

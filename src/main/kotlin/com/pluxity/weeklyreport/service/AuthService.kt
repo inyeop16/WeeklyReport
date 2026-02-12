@@ -8,6 +8,7 @@ import com.pluxity.weeklyreport.dto.request.LoginRequest
 import com.pluxity.weeklyreport.dto.request.SignupRequest
 import com.pluxity.weeklyreport.dto.response.TokenResponse
 import com.pluxity.weeklyreport.dto.response.UserResponse
+import com.pluxity.weeklyreport.dto.response.toResponse
 import com.pluxity.weeklyreport.exception.BusinessException
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
@@ -42,7 +43,7 @@ class AuthService(
             department = department
         )
 
-        return UserResponse.from(userRepository.save(user))
+        return userRepository.save(user).toResponse()
     }
 
     fun login(request: LoginRequest): TokenResponse {
@@ -59,7 +60,6 @@ class AuthService(
         return TokenResponse(
             accessToken = token,
             expiresIn = expiresIn,
-            userId = user.id
         )
     }
 }

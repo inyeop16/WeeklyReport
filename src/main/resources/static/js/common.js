@@ -29,22 +29,6 @@ const Common = (() => {
         return div.innerHTML;
     }
 
-    function setSelectedUser(userId) {
-        localStorage.setItem('selectedUserId', userId);
-    }
-
-    function getSelectedUser() {
-        return localStorage.getItem('selectedUserId');
-    }
-
-    function setSelectedTemplate(templateId) {
-        localStorage.setItem('selectedTemplateId', templateId);
-    }
-
-    function getSelectedTemplate() {
-        return localStorage.getItem('selectedTemplateId');
-    }
-
     // --- Auth Token ---
     function saveToken(token) { localStorage.setItem('accessToken', token); }
     function getToken() { return localStorage.getItem('accessToken'); }
@@ -56,10 +40,6 @@ const Common = (() => {
         getCurrentWeek,
         getToday,
         escapeHtml,
-        setSelectedUser,
-        getSelectedUser,
-        setSelectedTemplate,
-        getSelectedTemplate,
         saveToken,
         getToken,
         removeToken,

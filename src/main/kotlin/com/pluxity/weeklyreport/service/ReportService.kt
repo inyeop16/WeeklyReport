@@ -15,6 +15,7 @@ import com.pluxity.weeklyreport.exception.BusinessException
 import com.pluxity.weeklyreport.exception.ResourceNotFoundException
 import com.pluxity.weeklyreport.notification.NotificationAdapter
 import com.pluxity.weeklyreport.notification.dto.NotificationRequest
+import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -32,12 +33,15 @@ class ReportService(
 
     @Transactional
     fun generate(request: GenerateReportRequest): ReportResponse {
-        val user = userService.getEntity(request.userId)
+        val userId = SecurityContextHolder.getContext().authentication.principal as Long
+
+        val user = userService.getEntity(userId)
+
         val template = templateService.findActive(user.department?.name)
 
         if(template.isEmpty()) throw BusinessException("등록된 템플릿이 없습니다.")
         val entries = dailyEntryRepository.findByUserIdAndEntryDateBetween(
-            request.userId, request.weekStart, request.weekEnd
+            user.id, request.weekStart, request.weekEnd
         )
 
         if (entries.isEmpty()) {

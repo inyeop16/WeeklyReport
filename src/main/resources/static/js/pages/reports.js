@@ -7,7 +7,6 @@
 
     const chat = document.getElementById('chat');
     const input = document.getElementById('input');
-    const savedUserId = Common.getSelectedUser();
 
     // Initialize on page load
     document.addEventListener('DOMContentLoaded', function() {
@@ -76,21 +75,7 @@
      * Handle action buttons
      */
     window.doAction = async function(action) {
-        if (action === 'entries') {
-            try {
-                const entries = await API.entries.getByUser(savedUserId);
-                if (entries.length === 0) {
-                    return addMsg('등록된 업무기록이 없습니다.', 'bot');
-                }
-                const list = entries.map(e =>
-                    `• [${e.entryDate}] ${e.content}${e.category ? ' #' + e.category : ''}`
-                ).join('\n');
-                addMsg(list, 'bot', '업무기록');
-            } catch (e) {
-                addMsg(e.message, 'bot error');
-            }
-
-        } else if (action === 'generate') {
+        if (action === 'generate') {
             const { start, end } = Common.getCurrentWeek();
 
             addMsg(`주간보고 생성 요청 (${start} ~ ${end})`, 'user');
@@ -98,7 +83,6 @@
 
             try {
                 const report = await API.reports.generate({
-                    userId: Number(savedUserId),
                     weekStart: start,
                     weekEnd: end
                 });
@@ -109,19 +93,6 @@
                 addMsg(e.message, 'bot error');
             }
 
-        } else if (action === 'reports') {
-            try {
-                const reports = await API.reports.getByUser(savedUserId);
-                if (reports.length === 0) {
-                    return addMsg('생성된 보고서가 없습니다.', 'bot');
-                }
-                let html = reports.map(r =>
-                    `<div style="margin-bottom:6px">• <a href="#" onclick="viewReport(${r.id});return false" style="color:var(--accent);text-decoration:underline;cursor:pointer">#${r.id}</a> ${r.weekStart} ~ ${r.weekEnd}</div>`
-                ).join('');
-                addHtmlMsg(html, '보고서 목록');
-            } catch (e) {
-                addMsg(e.message, 'bot error');
-            }
         }
     };
 
@@ -218,7 +189,6 @@
 
         try {
             const entry = await API.entries.create({
-                userId: Number(savedUserId),
                 entryDate: Common.getToday(),
                 content: text
             });
