@@ -4,6 +4,8 @@ import io.jsonwebtoken.JwtException
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.security.Keys
 import org.slf4j.LoggerFactory
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
+import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.stereotype.Component
 import java.util.*
 import javax.crypto.SecretKey
@@ -63,4 +65,18 @@ class JwtTokenProvider(
             log.warn("JWT 토큰이 비어있습니다")
             false
         }
+
+    fun getAuthenticateFromToken(token: String): UsernamePasswordAuthenticationToken {
+        val payload = Jwts.parser()
+            .verifyWith(key)
+            .build()
+            .parseSignedClaims(token)
+            .payload
+
+        val userId = payload.subject.toLong()
+        val role = listOf(payload["role"] as String)
+        val authorities = listOf(SimpleGrantedAuthority("ROLE_$role"))
+        return UsernamePasswordAuthenticationToken(userId, null, authorities)
+    }
+
 }
