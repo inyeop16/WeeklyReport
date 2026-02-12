@@ -2,7 +2,6 @@ package com.pluxity.weeklyreport.bot
 
 import com.pluxity.weeklyreport.bot.dto.Activity
 import com.pluxity.weeklyreport.bot.dto.Attachment
-import com.pluxity.weeklyreport.domain.repository.TemplateRepository
 import com.pluxity.weeklyreport.domain.repository.UserRepository
 import com.pluxity.weeklyreport.dto.request.CreateDailyEntryRequest
 import com.pluxity.weeklyreport.dto.request.GenerateReportRequest
@@ -18,7 +17,6 @@ import java.time.temporal.TemporalAdjusters
 @Service
 class BotService(
     private val userRepository: UserRepository,
-    private val templateRepository: TemplateRepository,
     private val dailyEntryService: DailyEntryService,
     private val reportService: ReportService,
     private val cardBuilder: AdaptiveCardBuilder
