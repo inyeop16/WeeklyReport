@@ -12,17 +12,6 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
-  mail:
-    host: ${MAIL_HOST:smtp.gmail.com}
-    port: ${MAIL_PORT:587}
-    username: ${MAIL_USERNAME:}
-    password: ${MAIL_PASSWORD:}
-    properties:
-      mail:
-        smtp:
-          auth: true
-          starttls:
-            enable: true
 
 app:
   jwt:
@@ -41,8 +30,6 @@ app:
       base-url: https://api.groq.com/openai/v1
       model: openai/gpt-oss-120b
   notification:
-    provider: email
+    provider: teams
     teams:
       webhook-url: ${TEAMS_WEBHOOK_URL:}
-    email:
-      from: ${MAIL_FROM:noreply@pluxity.com}
