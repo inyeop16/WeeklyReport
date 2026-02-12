@@ -1,0 +1,14 @@
+.prompt-cell {
+    max-width: 300px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+#templatePrompt {
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 0.9rem;
+    min-height: 200px;
+}

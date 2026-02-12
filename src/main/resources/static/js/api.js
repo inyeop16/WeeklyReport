@@ -108,12 +108,23 @@ const API = (() => {
         delete: (id) => http.delete(`/reports/${id}`)
     };
 
+    /**
+     * Departments API
+     */
+    const departments = {
+        getAll: () => http.get('/departments'),
+        create: (data) => http.post('/departments', data),
+        update: (id, data) => http.put(`/departments/${id}`, data),
+        delete: (id) => http.delete(`/departments/${id}`)
+    };
+
     // Public API
     return {
         http,
         users,
         templates,
         entries,
-        reports
+        reports,
+        departments
     };
 })();

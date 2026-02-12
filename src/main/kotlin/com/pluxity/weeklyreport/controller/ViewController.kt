@@ -42,7 +42,7 @@ class ViewController(
 
     @GetMapping("/templates")
     fun templates(model: Model): String {
-        model.addAttribute("activePage", "templates")
+        model.addAttribute("activePage", "admin")
         return "pages/templates"
     }
 

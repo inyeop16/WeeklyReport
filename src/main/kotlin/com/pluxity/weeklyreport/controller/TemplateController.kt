@@ -1,6 +1,7 @@
 package com.pluxity.weeklyreport.controller
 
 import com.pluxity.weeklyreport.dto.request.CreateTemplateRequest
+import com.pluxity.weeklyreport.dto.request.UpdateTemplateRequest
 import com.pluxity.weeklyreport.dto.response.TemplateResponse
 import com.pluxity.weeklyreport.service.TemplateService
 import jakarta.validation.Valid
@@ -19,10 +20,23 @@ class TemplateController(
         ResponseEntity.status(HttpStatus.CREATED).body(templateService.create(request))
 
     @GetMapping
-    fun findActive(@RequestParam(required = false) department: String?): ResponseEntity<List<TemplateResponse>> =
-        ResponseEntity.ok(templateService.findActive(department))
+    fun findAll(): ResponseEntity<List<TemplateResponse>> =
+        ResponseEntity.ok(templateService.findAll())
 
     @GetMapping("/{id}")
     fun findById(@PathVariable id: Long): ResponseEntity<TemplateResponse> =
         ResponseEntity.ok(templateService.findById(id))
+
+    @PutMapping("/{id}")
+    fun update(
+        @PathVariable id: Long,
+        @Valid @RequestBody request: UpdateTemplateRequest
+    ): ResponseEntity<TemplateResponse> =
+        ResponseEntity.ok(templateService.update(id, request))
+
+    @DeleteMapping("/{id}")
+    fun delete(@PathVariable id: Long): ResponseEntity<Void> {
+        templateService.delete(id)
+        return ResponseEntity.noContent().build()
+    }
 }
