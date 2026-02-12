@@ -7,29 +7,15 @@
 
     const chat = document.getElementById('chat');
     const input = document.getElementById('input');
-    const userSelect = document.getElementById('userSelect');
-    const templateSelect = document.getElementById('templateSelect');
+    const savedUserId = Common.getSelectedUser();
 
     // Initialize on page load
     document.addEventListener('DOMContentLoaded', function() {
-        // Restore selected user/template from localStorage
-        const savedUserId = Common.getSelectedUser();
-        const savedTemplateId = Common.getSelectedTemplate();
-
-        if (savedUserId) {
-            userSelect.value = savedUserId;
-        }
-        if (savedTemplateId) {
-            templateSelect.value = savedTemplateId;
-        }
-
-        // Auto-resize textarea
         input.addEventListener('input', function() {
             this.style.height = '48px';
             this.style.height = Math.min(this.scrollHeight, 120) + 'px';
         });
 
-        // Show welcome message
         addMsg(
             '안녕하세요! 주간보고 생성기입니다.\n\n' +
             '1. 위에서 사용자와 템플릿을 선택하세요\n' +
@@ -90,42 +76,9 @@
      * Handle action buttons
      */
     window.doAction = async function(action) {
-        const userId = userSelect.value;
-
-        if (action === 'users') {
+        if (action === 'entries') {
             try {
-                const users = await API.users.getAll();
-                if (users.length === 0) {
-                    return addMsg('등록된 사용자가 없습니다.');
-                }
-                const list = users.map(u =>
-                    `• ${u.name} (${u.email}) - ${u.department || '부서없음'}`
-                ).join('\n');
-                addMsg(list, 'bot', '사용자 목록');
-            } catch (e) {
-                addMsg(e.message, 'bot error');
-            }
-
-        } else if (action === 'templates') {
-            try {
-                const templates = await API.templates.getAll();
-                if (templates.length === 0) {
-                    return addMsg('등록된 템플릿이 없습니다.');
-                }
-                const list = templates.map(t =>
-                    `• [${t.id}] ${t.name}${t.department ? ' (' + t.department + ')' : ''}`
-                ).join('\n');
-                addMsg(list, 'bot', '템플릿 목록');
-            } catch (e) {
-                addMsg(e.message, 'bot error');
-            }
-
-        } else if (action === 'entries') {
-            if (!userId) {
-                return addMsg('사용자를 먼저 선택하세요.', 'bot');
-            }
-            try {
-                const entries = await API.entries.getByUser(userId);
+                const entries = await API.entries.getByUser(savedUserId);
                 if (entries.length === 0) {
                     return addMsg('등록된 업무기록이 없습니다.', 'bot');
                 }
@@ -138,14 +91,6 @@
             }
 
         } else if (action === 'generate') {
-            if (!userId) {
-                return addMsg('사용자를 먼저 선택하세요.', 'bot');
-            }
-            const tplId = templateSelect.value;
-            if (!tplId) {
-                return addMsg('템플릿을 먼저 선택하세요.', 'bot');
-            }
-
             const { start, end } = Common.getCurrentWeek();
 
             addMsg(`주간보고 생성 요청 (${start} ~ ${end})`, 'user');
@@ -153,8 +98,7 @@
 
             try {
                 const report = await API.reports.generate({
-                    userId: Number(userId),
-                    templateId: Number(tplId),
+                    userId: Number(savedUserId),
                     weekStart: start,
                     weekEnd: end
                 });
@@ -166,11 +110,8 @@
             }
 
         } else if (action === 'reports') {
-            if (!userId) {
-                return addMsg('사용자를 먼저 선택하세요.', 'bot');
-            }
             try {
-                const reports = await API.reports.getByUser(userId);
+                const reports = await API.reports.getByUser(savedUserId);
                 if (reports.length === 0) {
                     return addMsg('생성된 보고서가 없습니다.', 'bot');
                 }
@@ -271,18 +212,13 @@
         const text = input.value.trim();
         if (!text) return;
 
-        const userId = userSelect.value;
-        if (!userId) {
-            return addMsg('사용자를 먼저 선택하세요.', 'bot');
-        }
-
         addMsg(text, 'user');
         input.value = '';
         input.style.height = '48px';
 
         try {
             const entry = await API.entries.create({
-                userId: Number(userId),
+                userId: Number(savedUserId),
                 entryDate: Common.getToday(),
                 content: text
             });
