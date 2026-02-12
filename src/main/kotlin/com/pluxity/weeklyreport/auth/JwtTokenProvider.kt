@@ -18,10 +18,7 @@ class JwtTokenProvider(
 ) {
 
     private val log = LoggerFactory.getLogger(javaClass)
-
-    private val key: SecretKey by lazy {
-        Keys.hmacShaKeyFor(Base64.getDecoder().decode(jwtProperties.secret))
-    }
+    private val key = Jwts.SIG.HS256.key().build()
 
     fun generateToken(userId: Long, username: String, role: String): String {
         val now = Date()

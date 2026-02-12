@@ -13,12 +13,12 @@ body { display: flex; flex-direction: column; height: 100vh; }
 .msg.bot { align-self: flex-start; background: var(--bg-secondary); border: 1px solid var(--border-color); border-bottom-left-radius: 4px; }
 .msg.bot .label { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
 .msg.error { border-color: var(--danger); }
-.msg .report-text { background: #0d1b2a; padding: 12px; border-radius: 8px; margin-top: 8px; font-size: 13px; }
+.msg .report-text { padding: 12px; border-radius: 8px; margin-top: 8px; font-size: 13px; }
 .msg .report-actions { margin-top: 8px; display: flex; gap: 6px; }
 .msg .report-actions button { background: var(--bg-tertiary); color: var(--text-muted); border: 1px solid var(--primary); border-radius: 6px; padding: 4px 12px; font-size: 12px; cursor: pointer; transition: all .2s; }
 .msg .report-actions button:hover { background: var(--primary); color: #fff; }
 .msg .edit-area { margin-top: 8px; }
-.msg .edit-area textarea { width: 100%; min-height: 200px; background: #0d1b2a; color: var(--text-primary); border: 1px solid var(--primary); border-radius: 8px; padding: 12px; font-size: 13px; font-family: inherit; resize: vertical; line-height: 1.6; }
+.msg .edit-area textarea { width: 100%; min-height: 200px; color: var(--text-primary); border: 1px solid var(--primary); border-radius: 8px; padding: 12px; font-size: 13px; font-family: inherit; resize: vertical; line-height: 1.6; }
 .msg .edit-area textarea:focus { outline: none; border-color: var(--accent); }
 .typing { align-self: flex-start; color: var(--text-muted); font-size: 13px; padding: 8px 16px; }
 .typing::after { content: '...'; animation: dots 1s steps(3) infinite; }
