@@ -51,11 +51,9 @@ class BotService(
     }
 
     private fun handleDailyEntry(activity: Activity, text: String): Activity {
-        val user = findOrCreateUser(activity)
 
         val entry = dailyEntryService.create(
             CreateDailyEntryRequest(
-                userId = user.id,
                 entryDate = LocalDate.now(),
                 content = text
             )
@@ -73,7 +71,6 @@ class BotService(
         return try {
             val report = reportService.generate(
                 GenerateReportRequest(
-                    userId = user.id,
                     weekStart = weekStart,
                     weekEnd = weekEnd
                 )
