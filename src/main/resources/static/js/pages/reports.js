@@ -23,15 +23,6 @@
             templateSelect.value = savedTemplateId;
         }
 
-        // Save selections on change
-        userSelect.addEventListener('change', function() {
-            Common.setSelectedUser(this.value);
-        });
-
-        templateSelect.addEventListener('change', function() {
-            Common.setSelectedTemplate(this.value);
-        });
-
         // Auto-resize textarea
         input.addEventListener('input', function() {
             this.style.height = '48px';
