@@ -3,14 +3,12 @@ package com.pluxity.weeklyreport.auth
 import io.jsonwebtoken.Claims
 import io.jsonwebtoken.JwtException
 import io.jsonwebtoken.Jwts
-import io.jsonwebtoken.security.Keys
 import org.slf4j.LoggerFactory
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.stereotype.Component
 import java.util.*
-import javax.crypto.SecretKey
 
 @Component
 class JwtTokenProvider(
@@ -34,26 +32,10 @@ class JwtTokenProvider(
             .compact()
     }
 
-    fun getUserIdFromToken(token: String): Long =
-        Jwts.parser()
-            .verifyWith(key)
-            .build()
-            .parseSignedClaims(token)
-            .payload
-            .subject
-            .toLong()
-
-    fun getRoleFromToken(token: String): String =
-        Jwts.parser()
-            .verifyWith(key)
-            .build()
-            .parseSignedClaims(token)
-            .payload["role"] as String
-
-    // 1. 단순 유효성 검증 (이제 파싱 성공 여부만 확인)
+    // 단순 유효성 검증 (이제 파싱 성공 여부만 확인)
     fun validateToken(token: String): Boolean = parseClaims(token) != null
 
-    // 2. 인증 객체 생성 (이미 파싱된 Claims를 이용하거나 새로 파싱)
+    // 인증 객체 생성 (이미 파싱된 Claims를 이용하거나 새로 파싱)
     fun getAuthentication(token: String): Authentication? {
         val claims = parseClaims(token) ?: return null // 여기서 한 번만 파싱됨
 

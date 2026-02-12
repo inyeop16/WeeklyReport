@@ -40,9 +40,6 @@ app:
       api-key: ${GROQ_API_KEY}
       base-url: https://api.groq.com/openai/v1
       model: openai/gpt-oss-120b
-  bot:
-    app-id: ${BOT_APP_ID:}
-    app-password: ${BOT_APP_PASSWORD:}
   notification:
     provider: email
     teams:
