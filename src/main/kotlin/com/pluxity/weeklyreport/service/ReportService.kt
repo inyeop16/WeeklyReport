@@ -118,11 +118,16 @@ class ReportService(
 
         val rawEntriesJson = objectMapper.writeValueAsString(teamEntriesData)
 
-        val template = templateRepository.findByNameAndActiveTrue("기본 팀통합보고")
-            ?: throw BusinessException("팀통합보고 템플릿이 없습니다. 관리 탭에서 등록해주세요.")
+        val systemPrompt = if (request.templateId != null) {
+            val template = templateRepository.findById(request.templateId)
+                .orElseThrow { ResourceNotFoundException("Template", "id", request.templateId) }
+            template.systemPrompt
+        } else {
+            ""
+        }
 
         val aiRequest = AiRequest(
-            systemPrompt = template.systemPrompt,
+            systemPrompt = systemPrompt,
             userMessage = """
                 부서: ${department.name}
                 기간: ${request.weekStart} ~ ${request.weekEnd}

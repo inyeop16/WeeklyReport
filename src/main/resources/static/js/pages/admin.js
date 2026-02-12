@@ -51,6 +51,7 @@ const Admin = (() => {
         document.getElementById('templateName').value = template ? template.name : '';
         document.getElementById('templateDept').value = template ? (template.department || '') : '';
         document.getElementById('templatePrompt').value = template ? template.systemPrompt : '';
+        document.getElementById('templateActive').checked = template ? template.active : true;
         document.getElementById('templateModalTitle').textContent = template ? '템플릿 수정' : '템플릿 추가';
         templateModal.show();
     }
@@ -69,6 +70,7 @@ const Admin = (() => {
         const name = document.getElementById('templateName').value.trim();
         const department = document.getElementById('templateDept').value.trim() || null;
         const systemPrompt = document.getElementById('templatePrompt').value.trim();
+        const active = document.getElementById('templateActive').checked;
 
         if (!name || !systemPrompt) {
             alert('이름과 시스템 프롬프트는 필수입니다');
@@ -77,7 +79,7 @@ const Admin = (() => {
 
         try {
             if (id) {
-                await API.templates.update(Number(id), { name, department, systemPrompt });
+                await API.templates.update(Number(id), { name, department, systemPrompt, active });
             } else {
                 await API.templates.create({ name, department, systemPrompt });
             }

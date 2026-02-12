@@ -5,6 +5,7 @@ const TeamReport = (() => {
 
     document.addEventListener('DOMContentLoaded', function () {
         loadDepartments();
+        loadTemplates();
         setDefaultDates();
     });
 
@@ -23,6 +24,21 @@ const TeamReport = (() => {
         }
     }
 
+    async function loadTemplates() {
+        const select = document.getElementById('templateSelect');
+        try {
+            const templates = await API.templates.getAll();
+            templates.filter(t => t.active).forEach(t => {
+                const option = document.createElement('option');
+                option.value = t.id;
+                option.textContent = t.name;
+                select.appendChild(option);
+            });
+        } catch (e) {
+            console.error('템플릿 목록 로드 실패:', e);
+        }
+    }
+
     function setDefaultDates() {
         const { start, end } = Common.getCurrentWeek();
         document.getElementById('weekStart').value = start;
@@ -31,6 +47,7 @@ const TeamReport = (() => {
 
     async function generate() {
         const departmentId = document.getElementById('departmentSelect').value;
+        const templateId = document.getElementById('templateSelect').value;
         const weekStart = document.getElementById('weekStart').value;
         const weekEnd = document.getElementById('weekEnd').value;
 
@@ -47,11 +64,13 @@ const TeamReport = (() => {
         hideResult();
 
         try {
-            const report = await API.reports.generateTeam({
+            const data = {
                 departmentId: Number(departmentId),
                 weekStart,
                 weekEnd
-            });
+            };
+            if (templateId) data.templateId = Number(templateId);
+            const report = await API.reports.generateTeam(data);
             currentReportId = report.id;
             showResult(report);
         } catch (e) {
