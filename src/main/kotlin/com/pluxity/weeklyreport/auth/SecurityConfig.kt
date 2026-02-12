@@ -30,12 +30,12 @@ class SecurityConfig(
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .authorizeHttpRequests {
                 it
-                    .requestMatchers("/api/auth/**").permitAll()
+                    .requestMatchers("/api/auth/**", "/reports" ,"/login", "/signup").permitAll()
                     .requestMatchers("/api/messages").permitAll()
                     .requestMatchers("/api/departments").permitAll()
                     .requestMatchers("/", "/index.html", "/css/**", "/js/**", "/images/**").permitAll()
                     .requestMatchers("/api/**").authenticated()
-                    .anyRequest().permitAll()
+                    .anyRequest().authenticated()
             }
             .exceptionHandling {
                 it.authenticationEntryPoint { _, response, _ ->
