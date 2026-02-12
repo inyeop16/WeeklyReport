@@ -28,7 +28,7 @@ AI 기반 주간보고 자동 생성기. 일일 업무 기록을 수집하여 AI
 
 Windows PowerShell:
 ```powershell
-cd C:\Users\PLX-PC-N002\weekly-report; .\gradlew.bat build -x test
+cd \path\to\your\project; .\gradlew.bat build -x test
 ```
 
 ## Project Structure
@@ -74,6 +74,7 @@ com.pluxity.weeklyreport/
 - `POST /api/messages` → BotController → BotService → `serviceUrl` 콜백으로 응답
 - Bot 명령어: `@주간보고` (보고서 생성), `@일일보고` (일일 기록), 기타 → 도움말 카드
 - Emulator 테스트: `http://localhost:8080/api/messages` (App ID/Password 비워둠)
+- 현재 blocking됨
 
 ### Authentication (JWT)
 
@@ -111,6 +112,37 @@ com.pluxity.weeklyreport/
 
 - `ddl-auto: update` — Hibernate가 스키마 자동 관리
 - `open-in-view: false`
+
+## Frontend Conventions
+
+### 관심사 분리 (HTML / CSS / JS)
+
+- **HTML에는 HTML만** — 인라인 `<style>`, `<script>` 블록 금지
+- CSS → `static/css/pages/{page}.css`, JS → `static/js/pages/{page}.js`로 분리
+- HTML에서 외부 참조: `<link rel="stylesheet" th:href="@{/css/pages/{page}.css}">`, `<script th:src="@{/js/pages/{page}.js}"></script>`
+- 공통 모듈(`common.js`, `custom.css`)은 각 페이지에서 직접 로드하거나 layout fragment에서 로드
+
+### 디렉토리 구조
+
+```
+src/main/resources/
+├── static/
+│   ├── css/
+│   │   ├── custom.css          공통 스타일 (CSS 변수, 다크모드 등)
+│   │   └── pages/              페이지별 CSS
+│   │       ├── login.css
+│   │       ├── signup.css
+│   │       └── reports.css
+│   └── js/
+│       ├── common.js           공통 유틸 (토큰 관리, escapeHtml 등)
+│       └── pages/              페이지별 JS
+│           ├── login.js
+│           ├── signup.js
+│           └── reports.js
+└── templates/
+    ├── layout/fragments.html   navbar 등 공통 fragment
+    └── pages/                  Thymeleaf 페이지 (HTML만)
+```
 
 ## Code Conventions
 
