@@ -20,7 +20,7 @@ class JwtAuthenticationFilter(
         val token = resolveToken(request)
 
         if (token != null && jwtTokenProvider.validateToken(token)) {
-            SecurityContextHolder.getContext().authentication = jwtTokenProvider.getAuthenticateFromToken(token)
+            SecurityContextHolder.getContext().authentication = jwtTokenProvider.getAuthentication(token)
         }
 
         filterChain.doFilter(request, response)
