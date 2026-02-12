@@ -68,10 +68,6 @@ class BotService(
 
     private fun handleGenerateReport(activity: Activity): Activity {
         val user = findOrCreateUser(activity)
-
-        val template = templateRepository.findByActiveTrue().firstOrNull()
-            ?: return replyText(activity, "활성화된 템플릿이 없습니다. 먼저 템플릿을 생성해주세요.")
-
         val today = LocalDate.now()
         val weekStart = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
         val weekEnd = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.FRIDAY))
@@ -80,7 +76,6 @@ class BotService(
             val report = reportService.generate(
                 GenerateReportRequest(
                     userId = user.id,
-                    templateId = template.id,
                     weekStart = weekStart,
                     weekEnd = weekEnd
                 )
