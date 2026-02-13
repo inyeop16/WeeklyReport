@@ -51,15 +51,7 @@ class ReportService(
         val user = userService.getEntity(userId)
         val content = generateContent(user, request.weekStart, request.weekEnd)
 
-        val report = Report(
-            user = user,
-            weekStart = request.weekStart,
-            weekEnd = request.weekEnd,
-            rendered = content.rendered,
-            rawEntries = content.rawEntriesJson,
-            isLast = true
-        )
-        return reportRepository.save(report).toResponse()
+        return createAndSaveNewReport(user, request.weekStart, request.weekEnd, content)
     }
 
     @Transactional
@@ -77,10 +69,14 @@ class ReportService(
             return reportRepository.save(existing).toResponse()
         }
 
+        return createAndSaveNewReport(user, request.weekStart, request.weekEnd, content)
+    }
+
+    private fun createAndSaveNewReport(user: User, weekStart: LocalDate, weekEnd: LocalDate, content: GeneratedContent): ReportResponse {
         val report = Report(
             user = user,
-            weekStart = request.weekStart,
-            weekEnd = request.weekEnd,
+            weekStart = weekStart,
+            weekEnd = weekEnd,
             rendered = content.rendered,
             rawEntries = content.rawEntriesJson,
             isLast = true
