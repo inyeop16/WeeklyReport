@@ -151,23 +151,35 @@
      * Show comparison UI (current vs candidate)
      */
     function showComparison(report) {
-        addHtmlMsg(
-            `<div class="candidate-comparison">` +
-            `<div class="comparison-panel">` +
-            `<div class="comparison-label">현재 보고서</div>` +
-            `<div class="report-content">${marked.parse(report.rendered || '')}</div>` +
-            `</div>` +
-            `<div class="comparison-panel candidate">` +
-            `<div class="comparison-label new">새 보고서</div>` +
-            `<div class="report-content">${marked.parse(report.candidateRendered || '')}</div>` +
-            `</div>` +
-            `</div>` +
-            `<div class="report-actions" style="margin-top:8px">` +
-            `<button onclick="selectCandidate(false)"><i class="bi bi-arrow-counterclockwise"></i> 현재 유지</button>` +
-            `<button class="primary" onclick="selectCandidate(true)"><i class="bi bi-check-lg"></i> 새 버전 선택</button>` +
-            `</div>`,
-            `주간보고 #${report.id} - 비교 (${report.weekStart} ~ ${report.weekEnd})`
-        );
+        // 1. 마크다운 변환 및 XSS 정화(Sanitize)
+        // DOMPurify가 없을 경우를 대비해 간단한 체크 로직을 넣었습니다.
+        const sanitize = (html) => (typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(html) : html);
+
+        const currentContent = sanitize(marked.parse(report.rendered || ''));
+        const candidateContent = sanitize(marked.parse(report.candidateRendered || ''));
+
+        // 2. 백틱(`)을 사용한 템플릿 리터럴로 가독성 개선
+        const htmlContent = `
+        <div class="candidate-comparison">
+            <div class="comparison-panel">
+                <div class="comparison-label">현재 보고서</div>
+                <div class="report-content">${currentContent}</div>
+            </div>
+            <div class="comparison-panel candidate">
+                <div class="comparison-label new">새 보고서</div>
+                <div class="report-content">${candidateContent}</div>
+            </div>
+        </div>
+        <div class="report-actions" style="margin-top:8px">
+            <button onclick="selectCandidate(false)"><i class="bi bi-arrow-counterclockwise"></i> 현재 유지</button>
+            <button class="primary" onclick="selectCandidate(true)"><i class="bi bi-check-lg"></i> 새 버전 선택</button>
+        </div>
+    `;
+
+        const title = `주간보고 #${report.id} - 비교 (${report.weekStart} ~ ${report.weekEnd})`;
+
+        // 3. 최종 메시지 호출
+        addHtmlMsg(htmlContent, title);
     }
 
     /**
