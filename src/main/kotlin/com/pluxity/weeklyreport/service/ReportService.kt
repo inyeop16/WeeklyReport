@@ -11,6 +11,7 @@ import com.pluxity.weeklyreport.domain.repository.TemplateRepository
 import com.pluxity.weeklyreport.domain.repository.UserRepository
 import com.pluxity.weeklyreport.dto.request.GenerateReportRequest
 import com.pluxity.weeklyreport.dto.request.ModifyReportRequest
+import com.pluxity.weeklyreport.dto.request.SelectCandidateRequest
 import com.pluxity.weeklyreport.dto.request.SendReportRequest
 import com.pluxity.weeklyreport.dto.response.ReportResponse
 import com.pluxity.weeklyreport.dto.request.GenerateTeamReportRequest
@@ -38,6 +39,8 @@ class ReportService(
     private val objectMapper: ObjectMapper
 ) {
 
+    private data class GeneratedContent(val rendered: String, val rawEntriesJson: String)
+
     @Transactional
     fun getOrGenerate(request: GenerateReportRequest, userId: Long): ReportResponse {
         val existing = reportRepository.findByUserIdAndWeekStartAndWeekEndAndIsLastTrue(
@@ -46,14 +49,43 @@ class ReportService(
         if (existing != null) return existing.toResponse()
 
         val user = userService.getEntity(userId)
-        return generateNewReport(user, request.weekStart, request.weekEnd).toResponse()
+        val content = generateContent(user, request.weekStart, request.weekEnd)
+
+        val report = Report(
+            user = user,
+            weekStart = request.weekStart,
+            weekEnd = request.weekEnd,
+            rendered = content.rendered,
+            rawEntries = content.rawEntriesJson,
+            isLast = true
+        )
+        return reportRepository.save(report).toResponse()
     }
 
     @Transactional
     fun regenerate(request: GenerateReportRequest, userId: Long): ReportResponse {
         val user = userService.getEntity(userId)
-        invalidateCurrentVersion(userId, request.weekStart, request.weekEnd)
-        return generateNewReport(user, request.weekStart, request.weekEnd).toResponse()
+        val existing = reportRepository.findByUserIdAndWeekStartAndWeekEndAndIsLastTrue(
+            userId, request.weekStart, request.weekEnd
+        )
+
+        val content = generateContent(user, request.weekStart, request.weekEnd)
+
+        if (existing != null) {
+            existing.candidateRendered = content.rendered
+            existing.rawEntries = content.rawEntriesJson
+            return reportRepository.save(existing).toResponse()
+        }
+
+        val report = Report(
+            user = user,
+            weekStart = request.weekStart,
+            weekEnd = request.weekEnd,
+            rendered = content.rendered,
+            rawEntries = content.rawEntriesJson,
+            isLast = true
+        )
+        return reportRepository.save(report).toResponse()
     }
 
     @Transactional
@@ -145,24 +177,27 @@ class ReportService(
 
         val aiResponse = aiAdapter.generate(aiRequest)
 
-        current.isLast = false
-        reportRepository.save(current)
-
-        val newReport = Report(
-            user = current.user,
-            weekStart = request.weekStart,
-            weekEnd = request.weekEnd,
-            rendered = aiResponse.content,
-            rawEntries = current.rawEntries,
-            isLast = true
-        )
-        return reportRepository.save(newReport).toResponse()
+        current.candidateRendered = aiResponse.content
+        return reportRepository.save(current).toResponse()
     }
 
-    fun getVersions(userId: Long, weekStart: LocalDate, weekEnd: LocalDate): List<ReportResponse> =
-        reportRepository.findByUserIdAndWeekStartAndWeekEndOrderByCreatedAtDesc(
-            userId, weekStart, weekEnd
-        ).map { it.toResponse() }
+    @Transactional
+    fun selectCandidate(request: SelectCandidateRequest, userId: Long): ReportResponse {
+        val report = reportRepository.findByUserIdAndWeekStartAndWeekEndAndIsLastTrue(
+            userId, request.weekStart, request.weekEnd
+        ) ?: throw BusinessException("보고서가 없습니다")
+
+        if (report.candidateRendered == null) {
+            throw BusinessException("선택할 후보 보고서가 없습니다")
+        }
+
+        if (request.acceptCandidate) {
+            report.rendered = report.candidateRendered
+        }
+        report.candidateRendered = null
+
+        return reportRepository.save(report).toResponse()
+    }
 
     @Transactional
     fun send(request: SendReportRequest, userId: Long): ReportResponse {
@@ -177,9 +212,9 @@ class ReportService(
             throw BusinessException("전송할 보고서 내용이 없습니다")
         }
 
-        // 선택한 버전을 current로 설정
-        invalidateCurrentVersion(userId, report.weekStart, report.weekEnd)
-        report.isLast = true
+        if (report.candidateRendered != null) {
+            throw BusinessException("후보 보고서가 있습니다. 먼저 후보를 선택하세요.")
+        }
 
         val notificationRequest = NotificationRequest(
             subject = "주간보고 (${report.weekStart} ~ ${report.weekEnd})",
@@ -202,7 +237,7 @@ class ReportService(
     fun findByUserId(userId: Long): List<ReportResponse> =
         reportRepository.findByUserIdAndIsLastTrue(userId).map { it.toResponse() }
 
-    private fun generateNewReport(user: User, weekStart: LocalDate, weekEnd: LocalDate): Report {
+    private fun generateContent(user: User, weekStart: LocalDate, weekEnd: LocalDate): GeneratedContent {
         val template = templateService.findActive(user.department?.name)
 
         if (template.isEmpty()) throw BusinessException("등록된 템플릿이 없습니다.")
@@ -237,23 +272,6 @@ class ReportService(
         )
 
         val aiResponse = aiAdapter.generate(aiRequest)
-
-        val report = Report(
-            user = user,
-            weekStart = weekStart,
-            weekEnd = weekEnd,
-            rendered = aiResponse.content,
-            rawEntries = rawEntriesJson,
-            isLast = true
-        )
-
-        return reportRepository.save(report)
-    }
-
-    private fun invalidateCurrentVersion(userId: Long, weekStart: LocalDate, weekEnd: LocalDate) {
-        reportRepository.findByUserIdAndWeekStartAndWeekEndAndIsLastTrue(userId, weekStart, weekEnd)?.let { currentReport ->
-            currentReport.isLast = false
-            reportRepository.save(currentReport)
-        }
+        return GeneratedContent(aiResponse.content, rawEntriesJson)
     }
 }

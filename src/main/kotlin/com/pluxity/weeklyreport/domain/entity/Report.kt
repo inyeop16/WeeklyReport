@@ -27,6 +27,9 @@ class Report(
     @Column(name = "raw_entries", columnDefinition = "jsonb")
     var rawEntries: String? = null,
 
+    @Column(name = "candidate_rendered", columnDefinition = "TEXT")
+    var candidateRendered: String? = null,
+
     @Column(name = "is_last", nullable = false)
     var isLast: Boolean = true,
 

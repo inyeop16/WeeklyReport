@@ -2,6 +2,7 @@ package com.pluxity.weeklyreport.controller
 
 import com.pluxity.weeklyreport.dto.request.GenerateReportRequest
 import com.pluxity.weeklyreport.dto.request.ModifyReportRequest
+import com.pluxity.weeklyreport.dto.request.SelectCandidateRequest
 import com.pluxity.weeklyreport.dto.request.SendReportRequest
 import com.pluxity.weeklyreport.dto.response.ReportResponse
 import com.pluxity.weeklyreport.service.ReportService
@@ -10,7 +11,6 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.*
-import java.time.LocalDate
 
 @RestController
 @RequestMapping("/api/reports")
@@ -39,13 +39,12 @@ class ReportController(
     ): ResponseEntity<ReportResponse> =
         ResponseEntity.status(HttpStatus.CREATED).body(reportService.modify(request, userId))
 
-    @GetMapping("/versions")
-    fun getVersions(
-        @RequestParam weekStart: LocalDate,
-        @RequestParam weekEnd: LocalDate,
+    @PostMapping("/select-candidate")
+    fun selectCandidate(
+        @Valid @RequestBody request: SelectCandidateRequest,
         @AuthenticationPrincipal userId: Long
-    ): ResponseEntity<List<ReportResponse>> =
-        ResponseEntity.ok(reportService.getVersions(userId, weekStart, weekEnd))
+    ): ResponseEntity<ReportResponse> =
+        ResponseEntity.ok(reportService.selectCandidate(request, userId))
 
     @PostMapping("/send")
     fun send(

@@ -12,7 +12,4 @@ interface ReportRepository : JpaRepository<Report, Long> {
         userId: Long, weekStart: LocalDate, weekEnd: LocalDate
     ): Report?
 
-    fun findByUserIdAndWeekStartAndWeekEndOrderByCreatedAtDesc(
-        userId: Long, weekStart: LocalDate, weekEnd: LocalDate
-    ): List<Report>
 }
