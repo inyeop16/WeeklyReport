@@ -7,10 +7,13 @@ import com.pluxity.weeklyreport.domain.entity.Report
 import com.pluxity.weeklyreport.domain.entity.User
 import com.pluxity.weeklyreport.domain.repository.DailyEntryRepository
 import com.pluxity.weeklyreport.domain.repository.ReportRepository
+import com.pluxity.weeklyreport.domain.repository.TemplateRepository
+import com.pluxity.weeklyreport.domain.repository.UserRepository
 import com.pluxity.weeklyreport.dto.request.GenerateReportRequest
 import com.pluxity.weeklyreport.dto.request.ModifyReportRequest
 import com.pluxity.weeklyreport.dto.request.SendReportRequest
 import com.pluxity.weeklyreport.dto.response.ReportResponse
+import com.pluxity.weeklyreport.dto.request.GenerateTeamReportRequest
 import com.pluxity.weeklyreport.dto.response.toResponse
 import com.pluxity.weeklyreport.exception.BusinessException
 import com.pluxity.weeklyreport.exception.ResourceNotFoundException
@@ -25,8 +28,11 @@ import java.time.LocalDate
 class ReportService(
     private val reportRepository: ReportRepository,
     private val dailyEntryRepository: DailyEntryRepository,
+    private val userRepository: UserRepository,
+    private val templateRepository: TemplateRepository,
     private val userService: UserService,
     private val templateService: TemplateService,
+    private val departmentService: DepartmentService,
     private val aiAdapter: AiAdapter,
     private val notificationAdapter: NotificationAdapter,
     private val objectMapper: ObjectMapper
@@ -48,6 +54,72 @@ class ReportService(
         val user = userService.getEntity(userId)
         invalidateCurrentVersion(userId, request.weekStart, request.weekEnd)
         return generateNewReport(user, request.weekStart, request.weekEnd).toResponse()
+    }
+
+    @Transactional
+    fun generateTeam(request: GenerateTeamReportRequest, userId: Long): ReportResponse {
+        val requestUser = userService.getEntity(userId)
+        val department = departmentService.getEntity(request.departmentId)
+        val members = userRepository.findByDepartmentId(request.departmentId)
+
+        if (members.isEmpty()) {
+            throw BusinessException("해당 부서에 소속된 사용자가 없습니다")
+        }
+
+        val teamEntriesData = members.mapNotNull { member ->
+            val entries = dailyEntryRepository.findByUserIdAndEntryDateBetween(
+                member.id, request.weekStart, request.weekEnd
+            )
+            if (entries.isEmpty()) return@mapNotNull null
+            mapOf(
+                "name" to member.name,
+                "entries" to entries.map { entry ->
+                    mapOf(
+                        "date" to entry.entryDate.toString(),
+                        "content" to entry.content,
+                        "category" to entry.category
+                    )
+                }
+            )
+        }
+
+        if (teamEntriesData.isEmpty()) {
+            throw BusinessException("해당 기간에 등록된 팀원 업무 기록이 없습니다")
+        }
+
+        val rawEntriesJson = objectMapper.writeValueAsString(teamEntriesData)
+
+        val systemPrompt = if (request.templateId != null) {
+            val template = templateRepository.findById(request.templateId)
+                .orElseThrow { ResourceNotFoundException("Template", "id", request.templateId) }
+            template.systemPrompt
+        } else {
+            ""
+        }
+
+        val aiRequest = AiRequest(
+            systemPrompt = systemPrompt,
+            userMessage = """
+                부서: ${department.name}
+                기간: ${request.weekStart} ~ ${request.weekEnd}
+                팀원 수: ${teamEntriesData.size}명
+
+                팀원별 업무 기록:
+                $rawEntriesJson
+            """.trimIndent()
+        )
+
+        val aiResponse = aiAdapter.generate(aiRequest)
+
+        val report = Report(
+            user = requestUser,
+            weekStart = request.weekStart,
+            weekEnd = request.weekEnd,
+            rendered = aiResponse.content,
+            rawEntries = rawEntriesJson
+        )
+
+        return reportRepository.save(report).toResponse()
     }
 
     @Transactional

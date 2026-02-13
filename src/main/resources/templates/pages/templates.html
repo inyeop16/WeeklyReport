@@ -37,7 +37,7 @@
                             <th>부서</th>
                             <th>상태</th>
                             <th>시스템 프롬프트</th>
-                            <th style="width: 120px;">작업</th>
+                            <th style="width: 120px;">관리</th>
                         </tr>
                         </thead>
                         <tbody id="templateTableBody">
@@ -65,7 +65,7 @@
                         <tr>
                             <th>ID</th>
                             <th>부서명</th>
-                            <th style="width: 120px;">작업</th>
+                            <th style="width: 120px;">관리</th>
                         </tr>
                         </thead>
                         <tbody id="deptTableBody">
@@ -102,6 +102,10 @@
                 <div class="mb-3">
                     <label for="templatePrompt" class="form-label">시스템 프롬프트</label>
                     <textarea class="form-control" id="templatePrompt" rows="8" placeholder="AI에게 전달할 시스템 프롬프트"></textarea>
+                </div>
+                <div class="mb-3 form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="templateActive" checked>
+                    <label class="form-check-label" for="templateActive">활성</label>
                 </div>
             </div>
             <div class="modal-footer">
