@@ -106,7 +106,7 @@ class ReportService(
         }
 
         // 선택한 버전을 current로 설정
-        invalidateCurrentVersion(userId, request.weekStart, request.weekEnd)
+        invalidateCurrentVersion(userId, report.weekStart, report.weekEnd)
         report.isLast = true
 
         val notificationRequest = NotificationRequest(
@@ -179,11 +179,9 @@ class ReportService(
     }
 
     private fun invalidateCurrentVersion(userId: Long, weekStart: LocalDate, weekEnd: LocalDate) {
-        val versions = reportRepository.findByUserIdAndWeekStartAndWeekEndOrderByCreatedAtDesc(
-            userId, weekStart, weekEnd
-        )
-        val current = versions.filter { it.isLast }
-        current.forEach { it.isLast = false }
-        reportRepository.saveAll(current)
+        reportRepository.findByUserIdAndWeekStartAndWeekEndAndIsLastTrue(userId, weekStart, weekEnd)?.let { currentReport ->
+            currentReport.isLast = false
+            reportRepository.save(currentReport)
+        }
     }
 }
