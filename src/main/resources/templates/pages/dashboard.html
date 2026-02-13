@@ -7,6 +7,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
     <link rel="stylesheet" th:href="@{/css/custom.css}">
+    <link rel="stylesheet" th:href="@{/css/pages/dashboard.css}">
 </head>
 <body>
 
@@ -14,14 +15,42 @@
 
 <main class="main-content">
     <div class="container-fluid">
-        <div class="text-center py-5">
-            <i class="bi bi-speedometer2" style="font-size: 5rem; color: var(--accent);"></i>
-            <h1 class="mt-4">대시보드</h1>
-            <p class="text-muted">준비 중입니다</p>
+
+        <div class="page-header">
+            <h1 id="departmentTitle">업무 진행 현황</h1>
         </div>
+
+        <div class="week-filter">
+            <label for="weekStart">기간</label>
+            <input type="date" id="weekStart" class="form-control form-control-sm">
+            <span class="separator">~</span>
+            <input type="date" id="weekEnd" class="form-control form-control-sm">
+            <button id="btnSearch" class="btn btn-sm btn-primary">조회</button>
+        </div>
+
+        <div class="gh-table-wrap">
+            <table class="gh-table">
+                <thead>
+                    <tr>
+                        <th class="col-desc">업무 상세 내용</th>
+                        <th class="col-status">상태</th>
+                        <th class="col-date">날짜</th>
+                        <th class="col-progress">진행률</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <tr>
+                        <td colspan="4" class="loading-cell">로딩 중...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
     </div>
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script th:src="@{/js/pages/dashboard.js}"></script>
+
 </body>
 </html>

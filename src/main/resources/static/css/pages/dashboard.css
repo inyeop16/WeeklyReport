@@ -1,0 +1,200 @@
+/* ============================================
+   Dashboard - GitHub Projects Style Table
+   ============================================ */
+
+/* Week Filter */
+.week-filter {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+}
+
+.week-filter label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+.week-filter .form-control-sm {
+    width: 160px;
+}
+
+.week-filter .separator {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+}
+
+/* Table Wrapper */
+.gh-table-wrap {
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+/* GitHub Projects Style Table */
+.gh-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.gh-table th {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    background: #f6f8fa;
+    padding: 8px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+    white-space: nowrap;
+}
+
+.gh-table td {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border-color);
+    vertical-align: middle;
+    line-height: 1.4;
+}
+
+.gh-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.gh-table tbody tr:hover {
+    background: #f6f8fa;
+}
+
+/* Column Widths */
+.col-desc {
+    width: 46%;
+}
+
+.col-status {
+    width: 16%;
+}
+
+.col-date {
+    width: 16%;
+}
+
+.col-progress {
+    width: 22%;
+}
+
+/* Group Header (user separator) */
+.group-header td {
+    background: #f6f8fa;
+    font-weight: 600;
+    font-size: 13px;
+    padding: 8px 16px !important;
+    color: var(--text-primary);
+}
+
+.group-header td i {
+    color: var(--text-muted);
+    margin-right: 4px;
+}
+
+.group-header:hover td {
+    background: #f6f8fa;
+}
+
+.task-count {
+    font-weight: 400;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-left: 8px;
+}
+
+/* Status Dot + Label */
+.status-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+}
+
+.status-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.status-dot.done {
+    background-color: var(--success);
+}
+
+.status-dot.in-progress {
+    background-color: var(--warning);
+}
+
+.status-dot.todo {
+    background-color: var(--text-muted);
+}
+
+/* Progress Bar (GitHub language bar style) */
+.progress-track {
+    width: 100%;
+    height: 8px;
+    background: var(--bg-tertiary);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+.progress-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.progress-pct {
+    font-size: 12px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    min-width: 32px;
+    text-align: right;
+}
+
+/* Muted placeholder for empty values */
+.muted-dash {
+    color: var(--text-muted);
+}
+
+/* Loading / Empty State */
+.loading-cell,
+.empty-cell {
+    text-align: center;
+    padding: 2.5rem 1rem !important;
+    color: var(--text-muted);
+    font-size: 14px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .week-filter {
+        flex-wrap: wrap;
+    }
+
+    .week-filter .form-control-sm {
+        width: 130px;
+    }
+
+    .col-desc {
+        width: auto;
+        min-width: 180px;
+    }
+
+    .gh-table-wrap {
+        overflow-x: auto;
+    }
+}
