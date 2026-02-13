@@ -127,7 +127,7 @@
         const seq = ++msgSeq;
         const sentBadge = report.isSent ? ' <span class="sent-badge">전송됨</span>' : '';
         addHtmlMsg(
-            `<div class="report-text" id="report-text-${seq}">${Common.escapeHtml(report.rendered || '')}</div>` +
+            `<div class="report-text report-content" id="report-text-${seq}">${marked.parse(report.rendered || '')}</div>` +
             `<div class="report-actions" id="report-actions-${seq}">` +
             `<button onclick="editReport(${seq})"><i class="bi bi-pencil"></i> 수정</button>` +
             `<button onclick="sendReport()"><i class="bi bi-send"></i> 전송</button>` +
