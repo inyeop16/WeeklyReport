@@ -28,8 +28,7 @@ class TemplateService(
 
     fun findActive(department: String?): List<TemplateResponse> {
         val templates = if (department != null) {
-            val deptTemplates = templateRepository.findByDepartmentAndActiveTrue(department)
-            deptTemplates.ifEmpty { templateRepository.findByActiveTrue() }
+            templateRepository.findByDepartmentAndActiveTrue(department)
         } else {
             templateRepository.findByActiveTrue()
         }

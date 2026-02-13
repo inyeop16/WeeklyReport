@@ -27,9 +27,11 @@ class Report(
     @Column(name = "raw_entries", columnDefinition = "jsonb")
     var rawEntries: String? = null,
 
-    @JdbcTypeCode(SqlTypes.ARRAY)
-    @Column(name = "sent_to", columnDefinition = "TEXT[]")
-    var sentTo: Array<String>? = null,
+    @Column(name = "is_last", nullable = false)
+    var isLast: Boolean = true,
+
+    @Column(name = "is_sent", nullable = false)
+    var isSent: Boolean = false,
 
     @Column(name = "created_at", updatable = false)
     val createdAt: OffsetDateTime = OffsetDateTime.now(),

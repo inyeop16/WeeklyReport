@@ -11,7 +11,8 @@ data class ReportResponse(
     val weekEnd: LocalDate,
     val rendered: String?,
     val rawEntries: String?,
-    val sentTo: List<String>?,
+    val isLast: Boolean,
+    val isSent: Boolean,
     val createdAt: OffsetDateTime
 )
 
@@ -22,6 +23,7 @@ fun Report.toResponse() = ReportResponse(
     weekEnd = weekEnd,
     rendered = rendered,
     rawEntries = rawEntries,
-    sentTo = sentTo?.toList(),
+    isLast = isLast,
+    isSent = isSent,
     createdAt = createdAt
 )

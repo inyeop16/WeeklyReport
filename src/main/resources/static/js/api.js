@@ -101,12 +101,12 @@ const API = (() => {
      */
     const reports = {
         getAll: () => http.get('/reports'),
-        getByUser: (userId) => http.get(`/reports?userId=${userId}`),
         getById: (id) => http.get(`/reports/${id}`),
         generate: (data) => http.post('/reports/generate', data),
-        generateTeam: (data) => http.post('/reports/generate-team', data),
-        update: (id, instruction) => http.put(`/reports/${id}`, { instruction }),
-        delete: (id) => http.delete(`/reports/${id}`)
+        regenerate: (data) => http.post('/reports/regenerate', data),
+        modify: (data) => http.post('/reports/modify', data),
+        getVersions: (weekStart, weekEnd) => http.get(`/reports/versions?weekStart=${weekStart}&weekEnd=${weekEnd}`),
+        send: (data) => http.post('/reports/send', data)
     };
 
     /**
