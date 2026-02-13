@@ -101,7 +101,7 @@
             }
 
         } else if (action === 'regenerate') {
-            if (!confirm('현재 보고서를 폐기하고 새로 생성합니다. 계속하시겠습니까?')) return;
+            if (!confirm('새 보고서를 생성합니다. 현재 보고서와 비교 후 선택할 수 있습니다. 계속하시겠습니까?')) return;
 
             addMsg(`주간보고 재생성 요청 (${start} ~ ${end})`, 'user');
             showTyping();
@@ -121,9 +121,20 @@
     };
 
     /**
-     * Show report in chat
+     * Show report in chat - if candidateRendered exists, show comparison UI
      */
     function showReport(report) {
+        if (report.candidateRendered) {
+            showComparison(report);
+        } else {
+            showSingleReport(report);
+        }
+    }
+
+    /**
+     * Show single report (no candidate)
+     */
+    function showSingleReport(report) {
         const seq = ++msgSeq;
         const sentBadge = report.isSent ? ' <span class="sent-badge">전송됨</span>' : '';
         addHtmlMsg(
@@ -135,6 +146,63 @@
             `주간보고 #${report.id} (${report.weekStart} ~ ${report.weekEnd})${sentBadge}`
         );
     }
+
+    /**
+     * Show comparison UI (current vs candidate)
+     */
+    function showComparison(report) {
+        // 1. 마크다운 변환 및 XSS 정화(Sanitize)
+        // DOMPurify가 없을 경우를 대비해 간단한 체크 로직을 넣었습니다.
+        const sanitize = (html) => (typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(html) : html);
+
+        const currentContent = sanitize(marked.parse(report.rendered || ''));
+        const candidateContent = sanitize(marked.parse(report.candidateRendered || ''));
+
+        // 2. 백틱(`)을 사용한 템플릿 리터럴로 가독성 개선
+        const htmlContent = `
+        <div class="candidate-comparison">
+            <div class="comparison-panel">
+                <div class="comparison-label">현재 보고서</div>
+                <div class="report-content">${currentContent}</div>
+            </div>
+            <div class="comparison-panel candidate">
+                <div class="comparison-label new">새 보고서</div>
+                <div class="report-content">${candidateContent}</div>
+            </div>
+        </div>
+        <div class="report-actions" style="margin-top:8px">
+            <button onclick="selectCandidate(false)"><i class="bi bi-arrow-counterclockwise"></i> 현재 유지</button>
+            <button class="primary" onclick="selectCandidate(true)"><i class="bi bi-check-lg"></i> 새 버전 선택</button>
+        </div>
+    `;
+
+        const title = `주간보고 #${report.id} - 비교 (${report.weekStart} ~ ${report.weekEnd})`;
+
+        // 3. 최종 메시지 호출
+        addHtmlMsg(htmlContent, title);
+    }
+
+    /**
+     * Select candidate (accept or reject)
+     */
+    window.selectCandidate = async function(accept) {
+        const { start, end } = currentWeek;
+        showTyping();
+
+        try {
+            const report = await API.reports.selectCandidate({
+                weekStart: start,
+                weekEnd: end,
+                acceptCandidate: accept
+            });
+            hideTyping();
+            addMsg(accept ? '새 버전을 선택했습니다.' : '현재 버전을 유지합니다.', 'bot');
+            showReport(report);
+        } catch (e) {
+            hideTyping();
+            addMsg(e.message, 'bot error');
+        }
+    };
 
     /**
      * View existing report
@@ -210,99 +278,38 @@
     };
 
     /**
-     * Send report - show version picker
+     * Send report
      */
     window.sendReport = async function() {
         const { start, end } = currentWeek;
 
         try {
-            const versions = await API.reports.getVersions(start, end);
-            if (!versions || versions.length === 0) {
+            const reports = await API.reports.getAll();
+            const report = reports.find(r => r.weekStart === start && r.weekEnd === end);
+
+            if (!report) {
                 return addMsg('전송할 보고서가 없습니다. 먼저 보고서를 생성하세요.', 'bot');
             }
 
-            if (versions.length === 1) {
-                await doSend(versions[0].id, start, end);
-                return;
+            if (report.candidateRendered) {
+                return addMsg('후보 보고서가 있습니다. 먼저 버전을 선택하세요.', 'bot');
             }
 
-            showVersionPicker(versions, start, end);
+            if (!confirm('이 보고서를 전송하시겠습니까?')) return;
+
+            await doSend(report.id);
         } catch (e) {
             addMsg(e.message, 'bot error');
         }
     };
 
     /**
-     * Show version picker UI
-     */
-    function showVersionPicker(versions, weekStart, weekEnd) {
-        let html = '<div class="version-picker">' +
-            '<div class="version-picker-title">전송할 버전을 선택하세요</div>' +
-            '<div class="version-list">';
-
-        versions.forEach((v, i) => {
-            const checked = v.isLast ? 'checked' : '';
-            const sentLabel = v.isSent ? ' <span class="sent-badge">전송됨</span>' : '';
-            const vNum = versions.length - i;
-            const fullText = Common.escapeHtml(v.rendered || '');
-            const preview = (v.rendered || '').substring(0, 80) + ((v.rendered || '').length > 80 ? '...' : '');
-
-            html += `<div class="version-item">` +
-                `<input type="radio" name="version-select" value="${v.id}" ${checked} id="ver-${v.id}">` +
-                `<div class="version-info">` +
-                `<label class="version-header" for="ver-${v.id}">` +
-                `<span class="version-label">v${vNum}${sentLabel}</span>` +
-                `<span class="version-date">${new Date(v.createdAt).toLocaleString('ko-KR')}</span>` +
-                `</label>` +
-                `<div class="version-preview">${Common.escapeHtml(preview)}</div>` +
-                `<button class="version-toggle" onclick="toggleVersionDetail(this)">` +
-                `<i class="bi bi-chevron-down"></i> 상세보기</button>` +
-                `<div class="version-detail" style="display:none">${fullText}</div>` +
-                `</div>` +
-                `</div>`;
-        });
-
-        html += '</div>' +
-            `<div class="report-actions" style="margin-top:8px">` +
-            `<button onclick="confirmSend('${weekStart}','${weekEnd}')"><i class="bi bi-send"></i> 전송</button>` +
-            `<button onclick="this.closest('.msg').remove()"><i class="bi bi-x"></i> 취소</button>` +
-            `</div></div>`;
-
-        addHtmlMsg(html, '버전 선택');
-    }
-
-    /**
-     * Toggle version detail view
-     */
-    window.toggleVersionDetail = function(btn) {
-        const detail = btn.nextElementSibling;
-        const icon = btn.querySelector('i');
-        const isOpen = detail.style.display !== 'none';
-        detail.style.display = isOpen ? 'none' : 'block';
-        icon.className = isOpen ? 'bi bi-chevron-down' : 'bi bi-chevron-up';
-        btn.childNodes[1].textContent = isOpen ? ' 상세보기' : ' 접기';
-    };
-
-    /**
-     * Confirm and send selected version
-     */
-    window.confirmSend = async function(weekStart, weekEnd) {
-        const selected = document.querySelector('input[name="version-select"]:checked');
-        if (!selected) {
-            return addMsg('버전을 선택하세요.', 'bot');
-        }
-        await doSend(Number(selected.value), weekStart, weekEnd);
-    };
-
-    /**
      * Execute send
      */
-    async function doSend(reportId, weekStart, weekEnd) {
+    async function doSend(reportId) {
         showTyping();
         try {
             const report = await API.reports.send({
-                weekStart: weekStart,
-                weekEnd: weekEnd,
                 reportId: reportId
             });
             hideTyping();

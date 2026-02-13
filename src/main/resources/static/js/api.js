@@ -105,7 +105,7 @@ const API = (() => {
         generate: (data) => http.post('/reports/generate', data),
         regenerate: (data) => http.post('/reports/regenerate', data),
         modify: (data) => http.post('/reports/modify', data),
-        getVersions: (weekStart, weekEnd) => http.get(`/reports/versions?weekStart=${weekStart}&weekEnd=${weekEnd}`),
+        selectCandidate: (data) => http.post('/reports/select-candidate', data),
         send: (data) => http.post('/reports/send', data)
     };
 
