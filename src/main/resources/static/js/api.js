@@ -119,6 +119,14 @@ const API = (() => {
         delete: (id) => http.delete(`/departments/${id}`)
     };
 
+    /**
+     * Dashboard API
+     */
+    const dashboard = {
+        get: (departmentId, weekStart, weekEnd) =>
+            http.get(`/dashboard?departmentId=${departmentId}&weekStart=${weekStart}&weekEnd=${weekEnd}`)
+    };
+
     // Public API
     return {
         http,
@@ -126,6 +134,7 @@ const API = (() => {
         templates,
         entries,
         reports,
-        departments
+        departments,
+        dashboard
     };
 })();

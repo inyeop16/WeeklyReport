@@ -21,6 +21,10 @@
         </div>
 
         <div class="week-filter">
+            <label for="departmentSelect">부서</label>
+            <select id="departmentSelect" class="form-select form-select-sm">
+                <option value="">부서 선택</option>
+            </select>
             <label for="weekStart">기간</label>
             <input type="date" id="weekStart" class="form-control form-control-sm">
             <span class="separator">~</span>
@@ -32,6 +36,7 @@
             <table class="gh-table">
                 <thead>
                     <tr>
+                        <th class="col-project">제목</th>
                         <th class="col-desc">업무 상세 내용</th>
                         <th class="col-status">상태</th>
                         <th class="col-date">날짜</th>

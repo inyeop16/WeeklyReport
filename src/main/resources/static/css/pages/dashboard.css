@@ -21,6 +21,10 @@
     width: 160px;
 }
 
+.week-filter .form-select-sm {
+    width: 180px;
+}
+
 .week-filter .separator {
     color: var(--text-muted);
     font-size: 0.875rem;
