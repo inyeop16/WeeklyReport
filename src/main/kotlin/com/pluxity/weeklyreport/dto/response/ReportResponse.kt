@@ -14,7 +14,8 @@ data class ReportResponse(
     val rawEntries: String?,
     val isLast: Boolean,
     val isSent: Boolean,
-    val createdAt: OffsetDateTime
+    val createdAt: OffsetDateTime,
+    val tasks: List<ReportTaskResponse> = emptyList()
 )
 
 fun Report.toResponse() = ReportResponse(
@@ -27,5 +28,6 @@ fun Report.toResponse() = ReportResponse(
     rawEntries = rawEntries,
     isLast = isLast,
     isSent = isSent,
-    createdAt = createdAt
+    createdAt = createdAt,
+    tasks = tasks.map { it.toResponse() }
 )

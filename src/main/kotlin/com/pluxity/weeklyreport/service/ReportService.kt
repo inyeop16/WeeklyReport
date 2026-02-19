@@ -4,11 +4,15 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.pluxity.weeklyreport.ai.AiAdapter
 import com.pluxity.weeklyreport.ai.dto.AiRequest
 import com.pluxity.weeklyreport.domain.entity.Report
+import com.pluxity.weeklyreport.domain.entity.ReportTask
+import com.pluxity.weeklyreport.domain.entity.TaskStatus
 import com.pluxity.weeklyreport.domain.entity.User
 import com.pluxity.weeklyreport.domain.repository.DailyEntryRepository
 import com.pluxity.weeklyreport.domain.repository.ReportRepository
 import com.pluxity.weeklyreport.domain.repository.TemplateRepository
 import com.pluxity.weeklyreport.domain.repository.UserRepository
+import com.pluxity.weeklyreport.dto.AiTaskDto
+import com.pluxity.weeklyreport.dto.AiTaskListDto
 import com.pluxity.weeklyreport.dto.request.GenerateReportRequest
 import com.pluxity.weeklyreport.dto.request.ModifyReportRequest
 import com.pluxity.weeklyreport.dto.request.SelectCandidateRequest
@@ -39,7 +43,11 @@ class ReportService(
     private val objectMapper: ObjectMapper
 ) {
 
-    private data class GeneratedContent(val rendered: String, val rawEntriesJson: String)
+    private data class GeneratedContent(
+        val rendered: String,
+        val rawEntriesJson: String,
+        val parsedTasks: List<AiTaskDto>
+    )
 
     @Transactional
     fun getOrGenerate(request: GenerateReportRequest, userId: Long): ReportResponse {
@@ -66,6 +74,8 @@ class ReportService(
         if (existing != null) {
             existing.candidateRendered = content.rendered
             existing.rawEntries = content.rawEntriesJson
+            existing.tasks.clear()
+            addTasksToReport(existing, content.parsedTasks)
             return reportRepository.save(existing).toResponse()
         }
 
@@ -81,6 +91,7 @@ class ReportService(
             rawEntries = content.rawEntriesJson,
             isLast = true
         )
+        addTasksToReport(report, content.parsedTasks)
         return reportRepository.save(report).toResponse()
     }
 
@@ -105,7 +116,6 @@ class ReportService(
                     mapOf(
                         "date" to entry.entryDate.toString(),
                         "content" to entry.content,
-                        "category" to entry.category
                     )
                 }
             )
@@ -250,7 +260,6 @@ class ReportService(
             mapOf(
                 "date" to entry.entryDate.toString(),
                 "content" to entry.content,
-                "category" to entry.category
             )
         }
         val rawEntriesJson = objectMapper.writeValueAsString(entriesData)
@@ -268,6 +277,69 @@ class ReportService(
         )
 
         val aiResponse = aiAdapter.generate(aiRequest)
-        return GeneratedContent(aiResponse.content, rawEntriesJson)
+
+        val jsonContent = extractJson(aiResponse.content)
+        val aiTaskList = try {
+            objectMapper.readValue(jsonContent, AiTaskListDto::class.java)
+        } catch (_: Exception) {
+            throw BusinessException("AI 응답 파싱에 실패했습니다. 다시 시도해 주세요.")
+        }
+
+        val rendered = renderFromTasks(user, weekStart, weekEnd, aiTaskList.tasks)
+
+        return GeneratedContent(rendered, rawEntriesJson, aiTaskList.tasks)
+    }
+
+    private fun extractJson(aiContent: String): String {
+        val trimmed = aiContent.trim()
+        val jsonPattern = Regex("""```(?:json)?\s*\n?(.*?)\n?\s*```""", RegexOption.DOT_MATCHES_ALL)
+        val match = jsonPattern.find(trimmed)
+        return match?.groupValues?.get(1)?.trim() ?: trimmed
+    }
+
+    private fun renderFromTasks(
+        user: User,
+        weekStart: LocalDate,
+        weekEnd: LocalDate,
+        tasks: List<AiTaskDto>
+    ): String {
+        val sb = StringBuilder()
+        sb.appendLine("## 주간보고")
+        sb.appendLine("- 작성자: ${user.name}")
+        sb.appendLine("- 부서: ${user.department?.name ?: "미지정"}")
+        sb.appendLine("- 기간: ${weekStart} ~ ${weekEnd}")
+        sb.appendLine()
+
+        val byProject = tasks.groupBy { it.project ?: "기타" }
+        byProject.forEach { (project, projectTasks) ->
+            sb.appendLine("### $project")
+            projectTasks.forEach { task ->
+                val statusLabel = when (task.status) {
+                    "DONE" -> "완료"
+                    "IN_PROGRESS" -> "진행 중"
+                    "TODO" -> "예정"
+                    else -> "-"
+                }
+                val progressText = task.progress?.let { " (${it}%)" } ?: ""
+                sb.appendLine("- [${statusLabel}] ${task.description}${progressText}")
+            }
+            sb.appendLine()
+        }
+
+        return sb.toString()
+    }
+
+    private fun addTasksToReport(report: Report, parsedTasks: List<AiTaskDto>) {
+        parsedTasks.forEach { dto ->
+            val task = ReportTask(
+                report = report,
+                project = dto.project,
+                description = dto.description,
+                status = dto.status?.let { runCatching { TaskStatus.valueOf(it) }.getOrNull() },
+                progress = dto.progress,
+                date = dto.date?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
+            )
+            report.tasks.add(task)
+        }
     }
 }
