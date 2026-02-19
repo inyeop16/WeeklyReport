@@ -24,6 +24,7 @@ import com.pluxity.weeklyreport.exception.BusinessException
 import com.pluxity.weeklyreport.exception.ResourceNotFoundException
 import com.pluxity.weeklyreport.notification.NotificationAdapter
 import com.pluxity.weeklyreport.notification.dto.NotificationRequest
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
@@ -48,6 +49,8 @@ class ReportService(
         val rawEntriesJson: String,
         val parsedTasks: List<AiTaskDto>
     )
+
+    private val log = LoggerFactory.getLogger(javaClass)
 
     @Transactional
     fun getOrGenerate(request: GenerateReportRequest, userId: Long): ReportResponse {
@@ -278,6 +281,8 @@ class ReportService(
 
         val aiResponse = aiAdapter.generate(aiRequest)
 
+        log.info("api response = ${aiResponse.content}")
+
         val jsonContent = extractJson(aiResponse.content)
         val aiTaskList = try {
             objectMapper.readValue(jsonContent, AiTaskListDto::class.java)
@@ -285,7 +290,52 @@ class ReportService(
             throw BusinessException("AI 응답 파싱에 실패했습니다. 다시 시도해 주세요.")
         }
 
+
+
+//        val aiRequestForRender = AiRequest(
+//            systemPrompt = """
+//               당신은 사내 주간보고서를 작성하는 AI 어시스턴트입니다.
+//
+//                사용자가 제공하는 일별 업무 기록을 아래 템플릿에 맞게 정리해주세요.
+//
+//                ## 규칙
+//                - 기록된 내용만 사용하고, 없는 내용을 만들지 마세요
+//                - 비즈니스 격식체를 사용하세요
+//                - 항목은 구체적으로 작성하세요 (수치, 진행률 포함)
+//                - 이슈가 없으면 해당 섹션은 '특이사항 없음'으로 표시하세요
+//
+//                ## 출력 형식
+//
+//                주간업무보고
+//                보고 기간: {시작일} ~ {종료일}
+//                작성자: {작성자명}
+//
+//                ■ 금주 실적
+//                 • (완료된 업무)
+//
+//                ■ 진행 중 업무
+//                 • (업무명 — 진행률 또는 현재 상태)
+//
+//                ■ 차주 계획
+//                 • (예정 업무)
+//
+//                ■ 이슈 및 협조 요청
+//                 • (문제점, 요청사항)
+//            """.trimIndent(),
+//            userMessage = """
+//                사용자: ${user.name}
+//                부서: ${user.department?.name ?: "미지정"}
+//                기간: ${weekStart} ~ ${weekEnd}
+//
+//                업무 기록:
+//                ${aiTaskList.task}
+//            """.trimIndent()
+//        )
+//
+//        val aiResponseForRender = aiAdapter.generate(aiRequestForRender)
+//        return GeneratedContent(aiResponseForRender, rawEntriesJson, aiTaskList.task)
         val rendered = renderFromTasks(user, weekStart, weekEnd, aiTaskList.task)
+
         return GeneratedContent(rendered, rawEntriesJson, aiTaskList.task)
     }
 
@@ -354,6 +404,7 @@ class ReportService(
                 description = dto.description,
                 status = dto.status?.let { runCatching { TaskStatus.valueOf(it) }.getOrNull() },
                 progress = dto.progress,
+                date = dto.date
             )
             report.tasks.add(task)
         }
