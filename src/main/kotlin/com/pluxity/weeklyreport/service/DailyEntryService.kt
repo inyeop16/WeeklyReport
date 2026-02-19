@@ -24,7 +24,6 @@ class DailyEntryService(
             user = user,
             entryDate = request.entryDate,
             content = request.content,
-            category = request.category
         )
         return dailyEntryRepository.save(entry).toResponse()
     }

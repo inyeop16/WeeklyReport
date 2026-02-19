@@ -5,9 +5,8 @@ data class AiTaskDto(
     val description: String = "",
     val status: String? = null,
     val progress: Int? = null,
-    val date: String? = null
 )
 
 data class AiTaskListDto(
-    val tasks: List<AiTaskDto> = emptyList()
+    val task: List<AiTaskDto> = emptyList()
 )

@@ -9,7 +9,6 @@ data class DailyEntryResponse(
     val userId: Long,
     val entryDate: LocalDate,
     val content: String,
-    val category: String?,
     val createdAt: OffsetDateTime
 )
 
@@ -18,6 +17,5 @@ fun DailyEntry.toResponse() = DailyEntryResponse(
     userId = user.id,
     entryDate = entryDate,
     content = content,
-    category = category,
     createdAt = createdAt
 )
