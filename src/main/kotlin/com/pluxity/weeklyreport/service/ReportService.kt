@@ -285,9 +285,8 @@ class ReportService(
             throw BusinessException("AI 응답 파싱에 실패했습니다. 다시 시도해 주세요.")
         }
 
-        val rendered = renderFromTasks(user, weekStart, weekEnd, aiTaskList.tasks)
-
-        return GeneratedContent(rendered, rawEntriesJson, aiTaskList.tasks)
+        val rendered = renderFromTasks(user, weekStart, weekEnd, aiTaskList.task)
+        return GeneratedContent(rendered, rawEntriesJson, aiTaskList.task)
     }
 
     private fun extractJson(aiContent: String): String {
@@ -304,26 +303,44 @@ class ReportService(
         tasks: List<AiTaskDto>
     ): String {
         val sb = StringBuilder()
-        sb.appendLine("## 주간보고")
-        sb.appendLine("- 작성자: ${user.name}")
-        sb.appendLine("- 부서: ${user.department?.name ?: "미지정"}")
-        sb.appendLine("- 기간: ${weekStart} ~ ${weekEnd}")
+
+        // 헤더 섹션
+        sb.appendLine("주간업무보고")
+        sb.appendLine("보고 기간: $weekStart ~ $weekEnd")
+        sb.appendLine("작성자: ${user.name}")
         sb.appendLine()
 
-        val byProject = tasks.groupBy { it.project ?: "기타" }
-        byProject.forEach { (project, projectTasks) ->
-            sb.appendLine("### $project")
-            projectTasks.forEach { task ->
-                val statusLabel = when (task.status) {
-                    "DONE" -> "완료"
-                    "IN_PROGRESS" -> "진행 중"
-                    "TODO" -> "예정"
-                    else -> "-"
+        // 1. 금주 실적 (DONE 상태인 업무들)
+        val doneTasks = tasks.filter { it.status == "DONE" }
+        sb.appendLine("■ 금주 실적")
+        if (doneTasks.isEmpty()) {
+            sb.appendLine(" • 없음")
+        } else {
+            doneTasks.groupBy { it.project ?: "기타" }.forEach { (project, projectTasks) ->
+                projectTasks.forEach { task ->
+                    sb.appendLine(" • ($project) ${task.description}")
                 }
-                val progressText = task.progress?.let { " (${it}%)" } ?: ""
-                sb.appendLine("- [${statusLabel}] ${task.description}${progressText}")
             }
-            sb.appendLine()
+        }
+        sb.appendLine()
+
+        // 2. 진행 중 업무 (IN_PROGRESS, TODO 또는 null인 업무들)
+        val ongoingTasks = tasks.filter { it.status != "DONE" }
+        sb.appendLine("■ 진행 중 업무")
+        if (ongoingTasks.isEmpty()) {
+            sb.appendLine(" • 없음")
+        } else {
+            ongoingTasks.groupBy { it.project ?: "기타" }.forEach { (project, projectTasks) ->
+                projectTasks.forEach { task ->
+                    val statusLabel = when (task.status) {
+                        "IN_PROGRESS" -> "진행 중"
+                        "TODO" -> "예정"
+                        else -> "상태 미정"
+                    }
+                    val progressText = task.progress?.let { " - $it%" } ?: " - $statusLabel"
+                    sb.appendLine(" • $project — ${task.description}$progressText")
+                }
+            }
         }
 
         return sb.toString()
@@ -337,7 +354,6 @@ class ReportService(
                 description = dto.description,
                 status = dto.status?.let { runCatching { TaskStatus.valueOf(it) }.getOrNull() },
                 progress = dto.progress,
-                date = dto.date?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
             )
             report.tasks.add(task)
         }
