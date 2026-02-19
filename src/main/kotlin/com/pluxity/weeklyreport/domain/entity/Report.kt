@@ -42,4 +42,7 @@ class Report(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0
-)
+) {
+    @OneToMany(mappedBy = "report", cascade = [CascadeType.ALL], orphanRemoval = true)
+    var tasks: MutableList<ReportTask> = mutableListOf()
+}
