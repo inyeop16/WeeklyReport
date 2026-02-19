@@ -4,6 +4,7 @@ import com.pluxity.weeklyreport.dto.response.DashboardResponse
 import com.pluxity.weeklyreport.service.DashboardService
 import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.ResponseEntity
+import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
@@ -18,9 +19,9 @@ class DashboardController(
 
     @GetMapping
     fun getDashboard(
-        @RequestParam departmentId: Long,
+        @AuthenticationPrincipal userId: Long,
         @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) weekStart: LocalDate,
         @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) weekEnd: LocalDate
     ): ResponseEntity<DashboardResponse> =
-        ResponseEntity.ok(dashboardService.getDashboard(departmentId, weekStart, weekEnd))
+        ResponseEntity.ok(dashboardService.getDashboard(userId, weekStart, weekEnd))
 }

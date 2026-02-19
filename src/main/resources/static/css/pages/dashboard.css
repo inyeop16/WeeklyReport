@@ -2,32 +2,21 @@
    Dashboard - GitHub Projects Style Table
    ============================================ */
 
-/* Week Filter */
-.week-filter {
+/* Week Navigation */
+.week-nav {
     display: flex;
     align-items: center;
     gap: 0.5rem;
     margin-bottom: 1.25rem;
 }
 
-.week-filter label {
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: var(--text-muted);
-    white-space: nowrap;
-}
-
-.week-filter .form-control-sm {
-    width: 160px;
-}
-
-.week-filter .form-select-sm {
-    width: 180px;
-}
-
-.week-filter .separator {
-    color: var(--text-muted);
-    font-size: 0.875rem;
+.week-label {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    min-width: 200px;
+    text-align: center;
+    user-select: none;
 }
 
 /* Table Wrapper */
@@ -70,21 +59,25 @@
     background: #f6f8fa;
 }
 
-/* Column Widths */
+/* Column Widths (total 100%) */
+.col-project {
+    width: 14%;
+}
+
 .col-desc {
-    width: 46%;
+    width: 38%;
 }
 
 .col-status {
-    width: 16%;
+    width: 14%;
 }
 
 .col-date {
-    width: 16%;
+    width: 14%;
 }
 
 .col-progress {
-    width: 22%;
+    width: 20%;
 }
 
 /* Group Header (user separator) */
@@ -185,12 +178,8 @@
 
 /* Responsive */
 @media (max-width: 768px) {
-    .week-filter {
+    .week-nav {
         flex-wrap: wrap;
-    }
-
-    .week-filter .form-control-sm {
-        width: 130px;
     }
 
     .col-desc {

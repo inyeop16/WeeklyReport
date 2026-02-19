@@ -123,8 +123,8 @@ const API = (() => {
      * Dashboard API
      */
     const dashboard = {
-        get: (departmentId, weekStart, weekEnd) =>
-            http.get(`/dashboard?departmentId=${departmentId}&weekStart=${weekStart}&weekEnd=${weekEnd}`)
+        get: (weekStart, weekEnd) =>
+            http.get(`/dashboard?weekStart=${weekStart}&weekEnd=${weekEnd}`)
     };
 
     // Public API
