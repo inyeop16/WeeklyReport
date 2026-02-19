@@ -18,9 +18,6 @@ class DailyEntry(
     @Column(columnDefinition = "TEXT", nullable = false)
     var content: String,
 
-    @Column
-    var category: String? = null,
-
     @Column(name = "created_at", updatable = false)
     val createdAt: OffsetDateTime = OffsetDateTime.now(),
 
