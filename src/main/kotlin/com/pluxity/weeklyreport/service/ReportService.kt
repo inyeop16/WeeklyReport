@@ -72,13 +72,11 @@ class ReportService(
             userId, request.weekStart, request.weekEnd
         )
 
-        val content = generateContent(user, request.weekStart, request.weekEnd)
+        val content = generateContent(user, request.weekStart, request.weekEnd, existing?.tasks)
 
         if (existing != null) {
             existing.candidateRendered = content.rendered
-            existing.rawEntries = content.rawEntriesJson
-            existing.tasks.clear()
-            addTasksToReport(existing, content.parsedTasks)
+            existing.candidateTasksJson = objectMapper.writeValueAsString(AiTaskListDto(content.parsedTasks))
             return reportRepository.save(existing).toResponse()
         }
 
@@ -202,8 +200,14 @@ class ReportService(
 
         if (request.acceptCandidate) {
             report.rendered = report.candidateRendered
+            if (report.candidateTasksJson != null) {
+                val aiTaskList = objectMapper.readValue(report.candidateTasksJson, AiTaskListDto::class.java)
+                report.tasks.clear()
+                addTasksToReport(report, aiTaskList.task)
+            }
         }
         report.candidateRendered = null
+        report.candidateTasksJson = null
 
         return reportRepository.save(report).toResponse()
     }
@@ -246,7 +250,12 @@ class ReportService(
     fun findByUserId(userId: Long): List<ReportResponse> =
         reportRepository.findByUserIdAndIsLastTrue(userId).map { it.toResponse() }
 
-    private fun generateContent(user: User, weekStart: LocalDate, weekEnd: LocalDate): GeneratedContent {
+    private fun generateContent(
+        user: User,
+        weekStart: LocalDate,
+        weekEnd: LocalDate,
+        existingTasks: List<ReportTask>? = null
+    ): GeneratedContent {
         val template = templateService.findActive(user.department?.name)
 
         if (template.isEmpty()) throw BusinessException("등록된 템플릿이 없습니다.")
@@ -267,9 +276,36 @@ class ReportService(
         }
         val rawEntriesJson = objectMapper.writeValueAsString(entriesData)
 
-        val aiRequest = AiRequest(
-            systemPrompt = template.first().systemPrompt,
-            userMessage = """
+        // TODO: rawEntriesJson을 가장 마지막에 보고서 생성 날짜 이후 데이터로 가져오면 input 줄일수있음.
+        val userMessage = if (!existingTasks.isNullOrEmpty()) {
+            val existingTaskJson = objectMapper.writeValueAsString(
+                existingTasks.map { task ->
+                    mapOf(
+                        "project" to task.project,
+                        "description" to task.description,
+                        "status" to task.status?.name,
+                        "progress" to task.progress,
+                        "date" to task.date?.toString()
+                    )
+                }
+            )
+
+            """
+                사용자: ${user.name}
+                부서: ${user.department?.name ?: "미지정"}
+                기간: ${weekStart} ~ ${weekEnd}
+
+                기존 보고서:
+                $existingTaskJson
+
+                최신 업무 기록:
+                $rawEntriesJson
+
+                기존 보고서와 최신 업무 기록을 비교하여 변경이 필요한 항목만 수정하고, 나머지는 그대로 유지하세요.
+                새로 추가된 업무는 추가하고, 더 이상 관련 없는 업무는 제거하세요.
+            """.trimIndent()
+        } else {
+            """
                 사용자: ${user.name}
                 부서: ${user.department?.name ?: "미지정"}
                 기간: ${weekStart} ~ ${weekEnd}
@@ -277,12 +313,14 @@ class ReportService(
                 업무 기록:
                 $rawEntriesJson
             """.trimIndent()
+        }
+
+        val aiRequest = AiRequest(
+            systemPrompt = template.first().systemPrompt,
+            userMessage = userMessage
         )
 
         val aiResponse = aiAdapter.generate(aiRequest)
-
-        log.info("api response = ${aiResponse.content}")
-
         val jsonContent = extractJson(aiResponse.content)
         val aiTaskList = try {
             objectMapper.readValue(jsonContent, AiTaskListDto::class.java)
@@ -290,50 +328,6 @@ class ReportService(
             throw BusinessException("AI 응답 파싱에 실패했습니다. 다시 시도해 주세요.")
         }
 
-
-
-//        val aiRequestForRender = AiRequest(
-//            systemPrompt = """
-//               당신은 사내 주간보고서를 작성하는 AI 어시스턴트입니다.
-//
-//                사용자가 제공하는 일별 업무 기록을 아래 템플릿에 맞게 정리해주세요.
-//
-//                ## 규칙
-//                - 기록된 내용만 사용하고, 없는 내용을 만들지 마세요
-//                - 비즈니스 격식체를 사용하세요
-//                - 항목은 구체적으로 작성하세요 (수치, 진행률 포함)
-//                - 이슈가 없으면 해당 섹션은 '특이사항 없음'으로 표시하세요
-//
-//                ## 출력 형식
-//
-//                주간업무보고
-//                보고 기간: {시작일} ~ {종료일}
-//                작성자: {작성자명}
-//
-//                ■ 금주 실적
-//                 • (완료된 업무)
-//
-//                ■ 진행 중 업무
-//                 • (업무명 — 진행률 또는 현재 상태)
-//
-//                ■ 차주 계획
-//                 • (예정 업무)
-//
-//                ■ 이슈 및 협조 요청
-//                 • (문제점, 요청사항)
-//            """.trimIndent(),
-//            userMessage = """
-//                사용자: ${user.name}
-//                부서: ${user.department?.name ?: "미지정"}
-//                기간: ${weekStart} ~ ${weekEnd}
-//
-//                업무 기록:
-//                ${aiTaskList.task}
-//            """.trimIndent()
-//        )
-//
-//        val aiResponseForRender = aiAdapter.generate(aiRequestForRender)
-//        return GeneratedContent(aiResponseForRender, rawEntriesJson, aiTaskList.task)
         val rendered = renderFromTasks(user, weekStart, weekEnd, aiTaskList.task)
 
         return GeneratedContent(rendered, rawEntriesJson, aiTaskList.task)

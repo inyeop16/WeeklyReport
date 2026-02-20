@@ -30,6 +30,9 @@ class Report(
     @Column(name = "candidate_rendered", columnDefinition = "TEXT")
     var candidateRendered: String? = null,
 
+    @Column(name = "candidate_tasks_json", columnDefinition = "TEXT")
+    var candidateTasksJson: String? = null,
+
     @Column(name = "is_last", nullable = false)
     var isLast: Boolean = true,
 
