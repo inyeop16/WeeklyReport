@@ -9,7 +9,8 @@ data class ReportTaskResponse(
     val description: String,
     val status: String?,
     val progress: Int?,
-    val date: LocalDate?
+    val startDate: LocalDate?,
+    val endDate: LocalDate?
 )
 
 fun ReportTask.toResponse() = ReportTaskResponse(
@@ -18,5 +19,6 @@ fun ReportTask.toResponse() = ReportTaskResponse(
     description = description,
     status = status?.name,
     progress = progress,
-    date = date
+    startDate = startDate,
+    endDate = endDate
 )

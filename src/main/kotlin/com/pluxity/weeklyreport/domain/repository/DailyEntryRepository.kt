@@ -6,5 +6,5 @@ import java.time.LocalDate
 
 interface DailyEntryRepository : JpaRepository<DailyEntry, Long> {
     fun findByUserId(userId: Long): List<DailyEntry>
-    fun findByUserIdAndEntryDateBetween(userId: Long, start: LocalDate, end: LocalDate): List<DailyEntry>
+    fun findByUserIdAndEntryDateBetweenOrderByCreatedAtDesc(userId: Long, start: LocalDate, end: LocalDate): List<DailyEntry>
 }

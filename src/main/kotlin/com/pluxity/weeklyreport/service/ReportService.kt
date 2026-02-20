@@ -107,7 +107,7 @@ class ReportService(
         }
 
         val teamEntriesData = members.mapNotNull { member ->
-            val entries = dailyEntryRepository.findByUserIdAndEntryDateBetween(
+            val entries = dailyEntryRepository.findByUserIdAndEntryDateBetweenOrderByCreatedAtDesc(
                 member.id, request.weekStart, request.weekEnd
             )
             if (entries.isEmpty()) return@mapNotNull null
@@ -260,7 +260,7 @@ class ReportService(
 
         if (template.isEmpty()) throw BusinessException("등록된 템플릿이 없습니다.")
 
-        val entries = dailyEntryRepository.findByUserIdAndEntryDateBetween(
+        val entries = dailyEntryRepository.findByUserIdAndEntryDateBetweenOrderByCreatedAtDesc(
             user.id, weekStart, weekEnd
         )
 
@@ -285,7 +285,8 @@ class ReportService(
                         "description" to task.description,
                         "status" to task.status?.name,
                         "progress" to task.progress,
-                        "date" to task.date?.toString()
+                        "startDate" to task.startDate?.toString(),
+                        "endDate" to task.endDate?.toString()
                     )
                 }
             )
@@ -298,10 +299,11 @@ class ReportService(
                 기존 보고서:
                 $existingTaskJson
 
-                최신 업무 기록:
+                최신 업무 기록 (최신순 정렬, 목록 상단이 가장 최근 기록):
                 $rawEntriesJson
 
                 기존 보고서와 최신 업무 기록을 비교하여 변경이 필요한 항목만 수정하고, 나머지는 그대로 유지하세요.
+                같은 날짜에 동일 업무가 여러 번 기록된 경우, 목록에서 더 위에 있는(최신) 기록을 우선하세요.
                 새로 추가된 업무는 추가하고, 더 이상 관련 없는 업무는 제거하세요.
             """.trimIndent()
         } else {
@@ -310,7 +312,7 @@ class ReportService(
                 부서: ${user.department?.name ?: "미지정"}
                 기간: ${weekStart} ~ ${weekEnd}
 
-                업무 기록:
+                업무 기록 (최신순 정렬, 목록 상단이 가장 최근 기록):
                 $rawEntriesJson
             """.trimIndent()
         }
@@ -320,7 +322,11 @@ class ReportService(
             userMessage = userMessage
         )
 
+        log.info("aiRequest: $aiRequest")
+
         val aiResponse = aiAdapter.generate(aiRequest)
+
+        log.info("aiResponse: $aiResponse")
         val jsonContent = extractJson(aiResponse.content)
         val aiTaskList = try {
             objectMapper.readValue(jsonContent, AiTaskListDto::class.java)
@@ -398,7 +404,8 @@ class ReportService(
                 description = dto.description,
                 status = dto.status?.let { runCatching { TaskStatus.valueOf(it) }.getOrNull() },
                 progress = dto.progress,
-                date = dto.date
+                startDate = dto.startDate,
+                endDate = dto.endDate
             )
             report.tasks.add(task)
         }

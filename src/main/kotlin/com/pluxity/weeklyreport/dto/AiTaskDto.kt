@@ -7,7 +7,8 @@ data class AiTaskDto(
     val description: String = "",
     val status: String? = null,
     val progress: Int? = null,
-    val date: LocalDate? = null
+    val startDate: LocalDate? = null,
+    val endDate: LocalDate? = null
 )
 
 data class AiTaskListDto(

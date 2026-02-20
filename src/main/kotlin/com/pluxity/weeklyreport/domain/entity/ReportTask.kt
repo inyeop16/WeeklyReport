@@ -24,8 +24,11 @@ class ReportTask(
     @Column
     var progress: Int? = null,
 
-    @Column(name = "task_date")
-    var date: LocalDate? = null,
+    @Column(name = "start_date")
+    var startDate: LocalDate? = null,
+
+    @Column(name = "end_date")
+    var endDate: LocalDate? = null,
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
